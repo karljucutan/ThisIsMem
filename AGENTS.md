@@ -63,12 +63,21 @@ Implementation guidance:
 - Minimize cross-slice coupling.
 - Keep domain/business rules explicit and readable.
 - Prefer small, focused functions and clear naming over deep class hierarchies.
+- Use progressive disclosure when presenting business rules from many files or long text bodies: show concise summaries first, then reveal deeper details, source excerpts, and full context on demand.
 
 Frontend guidance:
 
 - Use TypeScript with strict typing.
 - Use Biome as formatter/linter.
 - Use shadcn defaults with blue theme for UI baseline consistency.
+
+Progressive disclosure:
+
+- Default response should prioritize scanability: key answer, confidence, and top supporting rules.
+- Add optional layers users can expand: rationale, matched excerpts, related rules, and raw source path.
+- Preserve traceability at every layer by showing where the rule came from.
+- Avoid overloading first view with full document dumps unless explicitly requested.
+- Follow implementation plan in `src/PROGRESSIVE_DISCLOSURE.md`.
 
 ## Security considerations
 
