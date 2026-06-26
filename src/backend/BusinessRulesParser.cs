@@ -6,7 +6,7 @@ using BrulAssistant.Core.Dto;
 
 namespace BrulAssistant.Core.Parsers;
 
-public class BusinessRulesParser
+public sealed class BusinessRulesParser
 {
     public RuleCollectionDto ParseGroupedRuleFile(string filePath)
     {

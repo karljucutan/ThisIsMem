@@ -65,6 +65,10 @@ Implementation guidance:
 - Prefer small, focused functions and clear naming over deep class hierarchies.
 - Use progressive disclosure when presenting business rules from many files or long text bodies: show concise summaries first, then reveal deeper details, source excerpts, and full context on demand.
 
+Backend guidance:
+
+- C# classes should be sealed by default favoring composition over inheritance.
+
 Frontend guidance:
 
 - Use TypeScript with strict typing.

@@ -1,4 +1,4 @@
-public class BrulDto
+public sealed class BrulDto
 {
     // Layer 1: Top YAML Frontmatter Metadata
     public string Id { get; set; } = string.Empty;
@@ -15,7 +15,7 @@ public class BrulDto
     public List<RuleItemDto> Rules { get; set; } = new();
 }
 
-public class RuleItemDto
+public sealed class RuleItemDto
 {
     // Layer 2: Embedded Metadata & Main Summary
     public string Id { get; set; } = string.Empty;
@@ -29,7 +29,7 @@ public class RuleItemDto
     public RuleDetailsDto Details { get; set; } = new();
 }
 
-public class RuleDetailsDto
+public sealed class RuleDetailsDto
 {
     public string AcceptanceCriteria { get; set; } = string.Empty;
     public string GherkinTestCases { get; set; } = string.Empty;
