@@ -10,18 +10,17 @@ created: 2026-06-26
 lastReviewed: 2026-06-26
 version: 1
 canonicalSlug: rule-103-effective-date-backdating
+description: A new business policy cannot be issued with a requested effective date that is backdated more than 3 calendar days.
 ---
 
 ## Rule-103: Effective Date Backdating Limitations
 
-* **Rule Statement:** A new business policy cannot be issued with a requested effective date that is backdated more than 3 calendar days prior to the current submission timestamp.
-
-### 📋 Acceptance Criteria — Rule-103
+### Acceptance Criteria
 
 * **AC-1:** The system must compare the requested `PolicyEffectiveDate` against the current system date (`DateTime.UtcNow`).
 * **AC-2:** Backdating within the 3-day window requires an electronic No-Known-Loss Letter (NKLL) signed by the applicant.
 
-### 🧪 Gherkin Test Cases — Rule-103
+### Gherkin Test Cases
 
 * **Scenario A (Acceptable Backdate):**
   * Given Current Date = June 15th; Requested Effective Date = June 13th (2 days back)

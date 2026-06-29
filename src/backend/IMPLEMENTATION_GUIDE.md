@@ -11,7 +11,7 @@ version: 1.0
 Implemented a **YamlDotNet-based parser** for Microsoft Agent Framework tools that supports **progressive disclosure** across three layers:
 
 - **Layer 1** (fast): YAML frontmatter only
-- **Layer 2** (medium): Add section summaries (policy, acceptance criteria)
+- **Layer 2** (medium): Add section summaries (summary, acceptance criteria)
 - **Layer 3** (full): Add technical details (test cases, examples, exceptions)
 
 ## Why YamlDotNet?
@@ -59,7 +59,7 @@ RuleCollectionDocument
 // Layer 2: Rule Summaries (markdown sections - medium)
 RuleItem
   ├─ Id, Title, Category, CanonicalSlug, Tags
-  ├─ PolicySummary           // From ### Policy Summary
+  ├─ Summary           // From ### Summary
   ├─ AcceptanceCriteria      // From ### Acceptance Criteria
   └─ Source                  // For traceability
 
@@ -108,13 +108,13 @@ var fullDetails = parser.ParseRuleCollection(filePath, loadFullContent: true);
 2. **Deserialize with YamlDotNet** → Type-safe conversion to Dictionary
 3. **Extract rules** → Split by ````yaml` code blocks
 4. **Parse rule metadata** → Each rule has embedded YAML block
-5. **Extract sections** → Dynamically find markdown headings (Policy Summary, Acceptance Criteria, etc.)
+5. **Extract sections** → Dynamically find markdown headings (Summary, Acceptance Criteria, etc.)
 6. **Optional Layer 3** → Load test cases, examples, exceptions if requested
 
 ### Section Extraction
 
 Supports flexible heading variations:
-- `### Policy Summary` or `### 📋 Policy Summary`
+- `### Description` or `### 📋 Description`
 - `### Acceptance Criteria` or `### 📋 Acceptance Criteria`
 - `### Gherkin Test Cases` or `### 🧪 Gherkin Test Cases`
 

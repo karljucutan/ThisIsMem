@@ -9,11 +9,12 @@ lastReviewed: 2026-06-26
 version: 1
 author:
   name: Karl Jucutan
+description: Underwriting rules for new business submissions covering prior bad debt blocks, effective date backdating limitations, and hard-stop referral triggers for high-risk exposures.
 ---
 
 ## BRULS NewBusiness Underwriting Grouped Rules
 
-## Group Summary
+## Group Overview
 
 This grouped file contains underwriting rules for new business submissions.
 
@@ -26,18 +27,17 @@ created: 2026-06-26
 lastReviewed: 2026-06-26
 version: 1
 canonicalSlug: rule-102-prior-bad-debt-block
+description: New business applications cannot be bound if the applicant has outstanding uncollectible balances from prior canceled policies.
 ```
 
 ## Rule-102: Prior Bad Debt / Uncollectible Balance Block
 
-* **Rule Statement:** New business applications cannot be bound if the applicant has outstanding uncollectible balances from prior canceled policies.
-
-### 📋 Acceptance Criteria — Rule-102
+### Acceptance Criteria
 
 * **AC-1:** System must run SSN or FEIN lookup against bad debt ledger.
 * **AC-2:** A positive match freezes application until debt is cleared or manager override is applied.
 
-### 🧪 Gherkin Test Cases — Rule-102
+### Gherkin Test Cases
 
 * **Scenario A (Clean History):**
   * Given Applicant has no matching debt records

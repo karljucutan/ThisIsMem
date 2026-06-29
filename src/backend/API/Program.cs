@@ -1,8 +1,14 @@
+using API.Features.Rules.Queries;
+using API.Infrastructure.Options;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.Configure<KnowledgeBaseOptions>(builder.Configuration.GetSection(KnowledgeBaseOptions.SectionName));
+builder.Services.AddScoped<SearchRulesHandler>();
 
 var app = builder.Build();
 

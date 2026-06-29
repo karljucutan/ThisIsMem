@@ -16,7 +16,7 @@ public sealed class RuleCollectionDocument
     public string LastReviewed { get; set; } = string.Empty;
     public int Version { get; set; }
     public string AuthorName { get; set; } = string.Empty;
-    public string? Summary { get; set; }
+    public string Description { get; set; } = string.Empty;
     public List<string> Tags { get; set; } = [];
     public List<string> AppliesTo { get; set; } = [];
     public string? Priority { get; set; }
@@ -35,11 +35,10 @@ public sealed class RuleItem
     public string Title { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
     public string CanonicalSlug { get; set; } = string.Empty;
-    public string? Description { get; set; }
     public List<string> Tags { get; set; } = [];
 
-    // Layer 2: Summary and acceptance criteria (medium disclosure)
-    public string PolicySummary { get; set; } = string.Empty;
+    // Layer 2: Description and acceptance criteria (medium disclosure)
+    public string Description { get; set; } = string.Empty;
     public string AcceptanceCriteria { get; set; } = string.Empty;
 
     // Layer 3: Full details (lazy-loaded on demand)

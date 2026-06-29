@@ -10,18 +10,17 @@ created: 2026-06-26
 lastReviewed: 2026-06-26
 version: 1
 canonicalSlug: rule-101-minimum-down-payment
+description: A new business policy cannot proceed to a "Bound" or "Issued" status until the initial down payment is fully collected and verified.
 ---
 
 ## Rule-101: Minimum Down Payment Collection
 
-* **Rule Statement:** A new business policy cannot proceed to a "Bound" or "Issued" status until the initial down payment (Installment #1) is fully collected and verified.
-
-### 📋 Acceptance Criteria — Rule-101
+### Acceptance Criteria
 
 * **AC-1:** The binding engine must verify a successful credit card authorization token or cleared ACH reference before switching the policy status from Quote to Bound.
 * **AC-2:** No temporary binder documents may be generated while the payment status is "Pending".
 
-### 🧪 Gherkin Test Cases — Rule-101
+### Gherkin Test Cases
 
 * **Scenario A (Payment Cleared):**
   * Given Quote Premium = $1,200.00; Down Payment Received = $100.00

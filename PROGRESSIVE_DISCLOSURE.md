@@ -36,7 +36,7 @@ Example structure:
 id: pricing-discount-rules
 domain: pricing
 tags: [discount, eligibility, checkout]
-summary: Rules that govern discount eligibility and stacking.
+description: Rules that govern discount eligibility and stacking.
 applies_to: [cart, checkout]
 priority: high
 owner: commerce-team
@@ -45,7 +45,7 @@ last_reviewed: 2026-06-01
 
 # Pricing Discount Rules
 
-## Policy Summary
+## Summary
 High-level statements used for first-pass answers.
 
 ## Eligibility Rules
@@ -65,7 +65,7 @@ Layer 1: Answer summary (default)
 - 3 to 6 bullet points with the direct answer.
 - Include short confidence signal (High, Medium, Low).
 - Include top source references only.
-- Prefer frontmatter summary plus Policy Summary heading content.
+- Prefer frontmatter summary plus Summary heading content.
 
 Layer 2: Supporting details (expand)
 

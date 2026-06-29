@@ -12,7 +12,7 @@ namespace API.Infrastructure.Parsers;
 /// <summary>
 /// Parses BRULS markdown files with YAML frontmatter into Agent Framework tool format.
 /// Implements progressive disclosure: Layer 1 (frontmatter only), Layer 2 (sections), Layer 3 (full content).
-/// Uses YamlDotNet for reliable YAML parsing.
+/// Uses YamlDotNet for reliable YAML parsing with typed deserialization.
 /// </summary>
 public sealed class AgentFrameworkToolParser
 {
@@ -27,25 +27,50 @@ public sealed class AgentFrameworkToolParser
     }
 
     /// <summary>
-    /// Parse a BRULS markdown file into a RuleCollectionDocument.
-    /// Supports lazy-loading: pass loadFullContent=false for layer 1+2 only (fast),
-    /// or true for layer 3 (full details).
+    /// Parse Layer 1 only (frontmatter: id, title, category, tags, slug).
+    /// Fastest disclosure level for discovery and browsing.
     /// </summary>
-    public RuleCollectionDocument ParseRuleCollection(string filePath, bool loadFullContent = false)
+    public RuleCollectionDocument ParseRuleCollectionMinimal(string filePath)
+    {
+        return ParseRuleCollectionInternal(filePath, loadLayer2: false, loadLayer3: false);
+    }
+
+    /// <summary>
+    /// Parse Layer 1 + 2 (frontmatter + Description + Acceptance Criteria).
+    /// Balanced disclosure for standard queries and summaries.
+    /// </summary>
+    public RuleCollectionDocument ParseRuleCollectionStandard(string filePath)
+    {
+        return ParseRuleCollectionInternal(filePath, loadLayer2: true, loadLayer3: false);
+    }
+
+    /// <summary>
+    /// Parse Layer 1 + 2 + 3 (full details including Gherkin Test Cases, Examples, Exceptions, Implementation Notes).
+    /// Complete disclosure for detailed technical reference.
+    /// </summary>
+    public RuleCollectionDocument ParseRuleCollectionComplete(string filePath)
+    {
+        return ParseRuleCollectionInternal(filePath, loadLayer2: true, loadLayer3: true);
+    }
+
+    /// <summary>
+    /// Internal method: Parse BRULS markdown file with specified disclosure layers.
+    /// </summary>
+    private RuleCollectionDocument ParseRuleCollectionInternal(string filePath, bool loadLayer2, bool loadLayer3)
     {
         if (!File.Exists(filePath))
             throw new FileNotFoundException($"Rule file not found: {filePath}");
 
         string fileContent = File.ReadAllText(filePath);
 
-        // Extract and parse YAML frontmatter (Layer 1 - fast)
+        // Extract and parse YAML frontmatter (Layer 1 - always fast)
         var (frontmatterYaml, bodyContent) = ExtractFrontmatter(fileContent);
         
         var collection = ParseCollectionFrontmatter(frontmatterYaml);
         collection.FilePath = filePath;
 
-        // Extract rules from body with embedded YAML blocks (Layers 2 & 3)
-        collection.Rules = ParseRulesFromBody(bodyContent, loadFullContent);
+        // Extract rules from body with embedded YAML blocks (Layers 2 & 3 based on flags)
+        collection.Rules = ParseRulesFromBody(bodyContent, loadLayer2, loadLayer3, collection);
 
         return collection;
     }
@@ -54,7 +79,7 @@ public sealed class AgentFrameworkToolParser
     /// Extract frontmatter YAML and remaining body content.
     /// Returns (frontmatterYaml, bodyContent).
     /// </summary>
-    private (string frontmatter, string body) ExtractFrontmatter(string content)
+    private static (string frontmatter, string body) ExtractFrontmatter(string content)
     {
         const string delimiter = "---";
         int firstDelim = content.IndexOf(delimiter);
@@ -67,18 +92,16 @@ public sealed class AgentFrameworkToolParser
         if (secondDelim == -1)
             return (string.Empty, content);
 
-        string frontmatter = content.Substring(
-            firstDelim + delimiter.Length,
-            secondDelim - (firstDelim + delimiter.Length)
-        ).Trim();
+        string frontmatter = content[
+            (firstDelim + delimiter.Length)..secondDelim].Trim();
 
-        string body = content.Substring(secondDelim + delimiter.Length).Trim();
+        string body = content[(secondDelim + delimiter.Length)..].Trim();
 
         return (frontmatter, body);
     }
 
     /// <summary>
-    /// Parse collection-level YAML frontmatter using YamlDotNet.
+    /// Parse collection-level YAML frontmatter using typed deserialization.
     /// </summary>
     private RuleCollectionDocument ParseCollectionFrontmatter(string yamlContent)
     {
@@ -87,40 +110,25 @@ public sealed class AgentFrameworkToolParser
 
         try
         {
-            var yamlData = _yamlDeserializer.Deserialize<Dictionary<string, object>>(yamlContent);
+            var frontmatter = _yamlDeserializer.Deserialize<CollectionFrontmatterDto>(yamlContent) 
+                ?? new CollectionFrontmatterDto();
             
-            var collection = new RuleCollectionDocument
+            return new RuleCollectionDocument
             {
-                Id = GetStringValue(yamlData, "id"),
-                Title = GetStringValue(yamlData, "title"),
-                Type = GetStringValue(yamlData, "type"),
-                Source = GetStringValue(yamlData, "source"),
-                Domain = GetStringValue(yamlData, "domain"),
-                Created = GetStringValue(yamlData, "created"),
-                LastReviewed = GetStringValue(yamlData, "lastReviewed"),
-                Version = GetIntValue(yamlData, "version"),
-                Summary = GetStringValue(yamlData, "summary"),
-                Priority = GetStringValue(yamlData, "priority"),
+                Id = frontmatter.Id ?? string.Empty,
+                Title = frontmatter.Title ?? string.Empty,
+                Type = frontmatter.Type ?? string.Empty,
+                Source = frontmatter.Source ?? string.Empty,
+                Domain = frontmatter.Domain ?? string.Empty,
+                Created = frontmatter.Created ?? string.Empty,
+                LastReviewed = frontmatter.LastReviewed ?? string.Empty,
+                Version = frontmatter.Version,
+                AuthorName = frontmatter.Author?.Name ?? string.Empty,
+                Description = frontmatter.Description ?? string.Empty,
+                Priority = frontmatter.Priority,
+                Tags = frontmatter.Tags ?? [],
+                AppliesTo = frontmatter.AppliesTo ?? [],
             };
-
-            if (yamlData.ContainsKey("author") && yamlData["author"] is Dictionary<object, object> authorDict)
-            {
-                collection.AuthorName = authorDict.ContainsKey("name") 
-                    ? authorDict["name"]?.ToString() ?? string.Empty 
-                    : string.Empty;
-            }
-
-            if (yamlData.ContainsKey("tags"))
-            {
-                collection.Tags = GetListValue(yamlData, "tags");
-            }
-
-            if (yamlData.ContainsKey("appliesTo"))
-            {
-                collection.AppliesTo = GetListValue(yamlData, "appliesTo");
-            }
-
-            return collection;
         }
         catch (Exception ex)
         {
@@ -129,15 +137,38 @@ public sealed class AgentFrameworkToolParser
     }
 
     /// <summary>
-    /// Parse rules from markdown body. Supports Layer 2 (summaries) and Layer 3 (full content).
+    /// Parse rules from markdown body. Supports Layer 2 (Acceptance Criteria) and Layer 3 (full content).
     /// </summary>
-    private List<RuleItem> ParseRulesFromBody(string bodyContent, bool loadFullContent)
+    private List<RuleItem> ParseRulesFromBody(string bodyContent, bool loadLayer2, bool loadLayer3, RuleCollectionDocument collection)
     {
         var rules = new List<RuleItem>();
 
         // Split by YAML code blocks (```yaml ... ```)
         var yamlBlockPattern = @"```yaml\s*([\s\S]*?)\s*```";
         var matches = Regex.Matches(bodyContent, yamlBlockPattern);
+
+        if (matches.Count == 0)
+        {
+            var singleRule = new RuleItem
+            {
+                Id = collection.Id,
+                Title = collection.Title,
+                Category = string.Empty,
+                CanonicalSlug = string.Empty,
+                Description = collection.Description,
+                Tags = [.. collection.Tags],
+                Source = new RuleSource
+                {
+                    FilePath = collection.FilePath,
+                    HeadingPath = collection.Title,
+                    LineNumber = 1,
+                },
+            };
+
+            PopulateRuleSections(singleRule, bodyContent, loadLayer2, loadLayer3);
+            rules.Add(singleRule);
+            return rules;
+        }
 
         foreach (Match match in matches)
         {
@@ -151,48 +182,9 @@ public sealed class AgentFrameworkToolParser
 
             // Extract content sections from markdown (after the YAML block)
             int blockEnd = match.Index + match.Length;
-            string contentAfterBlock = bodyContent.Substring(blockEnd);
+            string contentAfterBlock = bodyContent[blockEnd..];
 
-            // Layer 2: Extract summaries and acceptance criteria
-            ruleItem.PolicySummary = ExtractMarkdownSection(
-                contentAfterBlock,
-                "### Policy Summary",
-                new[] { "### Acceptance Criteria", "### 📋 Acceptance Criteria" }
-            );
-
-            ruleItem.AcceptanceCriteria = ExtractMarkdownSection(
-                contentAfterBlock,
-                new[] { "### Acceptance Criteria", "### 📋 Acceptance Criteria" },
-                new[] { "### Gherkin", "### 🧪 Gherkin Test Cases" }
-            );
-
-            // Layer 3: Full content (only if requested)
-            if (loadFullContent)
-            {
-                ruleItem.Details = new RuleDetails
-                {
-                    GherkinTestCases = ExtractMarkdownSection(
-                        contentAfterBlock,
-                        new[] { "### Gherkin Test Cases", "### 🧪 Gherkin Test Cases" },
-                        new[] { "```yaml", "## " }
-                    ),
-                    Examples = ExtractMarkdownSection(
-                        contentAfterBlock,
-                        new[] { "### Examples", "### 📚 Examples" },
-                        new[] { "```yaml", "## " }
-                    ),
-                    Exceptions = ExtractMarkdownSection(
-                        contentAfterBlock,
-                        new[] { "### Exceptions", "### ⚠️ Exceptions" },
-                        new[] { "```yaml", "## " }
-                    ),
-                    ImplementationNotes = ExtractMarkdownSection(
-                        contentAfterBlock,
-                        new[] { "### Implementation Notes", "### 💻 Implementation Notes" },
-                        new[] { "```yaml", "## " }
-                    ),
-                };
-            }
+            PopulateRuleSections(ruleItem, contentAfterBlock, loadLayer2, loadLayer3);
 
             rules.Add(ruleItem);
         }
@@ -201,24 +193,24 @@ public sealed class AgentFrameworkToolParser
     }
 
     /// <summary>
-    /// Parse rule-level YAML metadata block using YamlDotNet.
+    /// Parse rule-level YAML metadata block using typed deserialization.
     /// </summary>
     private RuleItem ParseRuleMetadata(string yamlBlock)
     {
         try
         {
-            var yamlData = _yamlDeserializer.Deserialize<Dictionary<string, object>>(yamlBlock);
+            var metadata = _yamlDeserializer.Deserialize<RuleMetadataDto>(yamlBlock) 
+                ?? new RuleMetadataDto();
             
-            var rule = new RuleItem
+            return new RuleItem
             {
-                Id = GetStringValue(yamlData, "id"),
-                Title = GetStringValue(yamlData, "title"),
-                Category = GetStringValue(yamlData, "category"),
-                CanonicalSlug = GetStringValue(yamlData, "canonicalSlug"),
-                Tags = GetListValue(yamlData, "tags"),
+                Id = metadata.Id ?? string.Empty,
+                Title = metadata.Title ?? string.Empty,
+                Category = metadata.Category ?? string.Empty,
+                CanonicalSlug = metadata.CanonicalSlug ?? string.Empty,
+                Description = metadata.Description ?? string.Empty,
+                Tags = metadata.Tags ?? [],
             };
-
-            return rule;
         }
         catch
         {
@@ -232,12 +224,12 @@ public sealed class AgentFrameworkToolParser
     /// startHeaders: array of possible header variations to start from
     /// endHeaders: array of possible header variations to stop at
     /// </summary>
-    private string ExtractMarkdownSection(string content, string startHeader, string[] endHeaders)
+    private static string ExtractMarkdownSection(string content, string startHeader, string[] endHeaders)
     {
-        return ExtractMarkdownSection(content, new[] { startHeader }, endHeaders);
+        return ExtractMarkdownSection(content, [startHeader], endHeaders);
     }
 
-    private string ExtractMarkdownSection(string content, string[] startHeaders, string[] endHeaders)
+    private static string ExtractMarkdownSection(string content, string[] startHeaders, string[] endHeaders)
     {
         int startIndex = -1;
 
@@ -266,47 +258,89 @@ public sealed class AgentFrameworkToolParser
             }
         }
 
-        return content.Substring(startIndex, endIndex - startIndex).Trim();
+        return content[startIndex..endIndex].Trim();
+    }
+
+    private static void PopulateRuleSections(RuleItem ruleItem, string contentAfterBlock, bool loadLayer2, bool loadLayer3)
+    {
+        // Layer 2: Acceptance Criteria only.
+        if (loadLayer2)
+        {
+            ruleItem.AcceptanceCriteria = ExtractMarkdownSection(
+                contentAfterBlock,
+                ["### Acceptance Criteria", "### 📋 Acceptance Criteria"],
+                ["### Gherkin", "### Gherkin Test Cases", "## ", "```yaml"]
+            );
+        }
+
+        // Layer 3: Full content (only if requested)
+        if (loadLayer3)
+        {
+            ruleItem.Details = new RuleDetails
+            {
+                GherkinTestCases = ExtractMarkdownSection(
+                    contentAfterBlock,
+                    ["### Gherkin Test Cases", "### Gherkin Test Cases"],
+                    ["```yaml", "## "]
+                ),
+                Examples = ExtractMarkdownSection(
+                    contentAfterBlock,
+                    ["### Examples", "### Examples"],
+                    ["```yaml", "## "]
+                ),
+                Exceptions = ExtractMarkdownSection(
+                    contentAfterBlock,
+                    ["### Exceptions", "### Exceptions"],
+                    ["```yaml", "## "]
+                ),
+                ImplementationNotes = ExtractMarkdownSection(
+                    contentAfterBlock,
+                    ["### Implementation Notes", "### Implementation Notes"],
+                    ["```yaml", "## "]
+                ),
+            };
+        }
     }
 
     /// <summary>
     /// Helper to safely extract string values from YAML dictionary.
+    /// Internal DTO for collection frontmatter deserialization.
     /// </summary>
-    private string GetStringValue(Dictionary<string, object>? dict, string key)
+    private sealed class CollectionFrontmatterDto
     {
-        if (dict == null || !dict.ContainsKey(key))
-            return string.Empty;
-
-        return dict[key]?.ToString() ?? string.Empty;
+        public string? Id { get; set; }
+        public string? Title { get; set; }
+        public string? Type { get; set; }
+        public string? Source { get; set; }
+        public string? Domain { get; set; }
+        public string? Created { get; set; }
+        public string? LastReviewed { get; set; }
+        public int Version { get; set; }
+        public string? Description { get; set; }
+        public string? Priority { get; set; }
+        public AuthorDto? Author { get; set; }
+        public List<string>? Tags { get; set; }
+        public List<string>? AppliesTo { get; set; }
     }
 
     /// <summary>
-    /// Helper to safely extract int values from YAML dictionary.
+    /// Internal DTO for author information.
     /// </summary>
-    private int GetIntValue(Dictionary<string, object>? dict, string key)
+    private sealed class AuthorDto
     {
-        if (dict == null || !dict.ContainsKey(key))
-            return 0;
-
-        if (int.TryParse(dict[key]?.ToString(), out int value))
-            return value;
-
-        return 0;
+        public string? Name { get; set; }
     }
 
     /// <summary>
-    /// Helper to safely extract list values from YAML dictionary.
+    /// Internal DTO for rule metadata deserialization.
     /// </summary>
-    private List<string> GetListValue(Dictionary<string, object>? dict, string key)
+    private sealed class RuleMetadataDto
     {
-        if (dict == null || !dict.ContainsKey(key))
-            return [];
-
-        if (dict[key] is List<object> objList)
-        {
-            return objList.Select(o => o?.ToString() ?? string.Empty).ToList();
-        }
-
-        return [];
+        public string? Id { get; set; }
+        public string? Title { get; set; }
+        public string? Category { get; set; }
+        public string? CanonicalSlug { get; set; }
+        public string? Description { get; set; }
+        public List<string>? Tags { get; set; }
     }
 }

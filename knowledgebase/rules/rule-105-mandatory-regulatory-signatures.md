@@ -10,17 +10,16 @@ created: 2026-06-26
 lastReviewed: 2026-06-26
 version: 1
 canonicalSlug: rule-105-mandatory-regulatory-signatures
+description: No policy may be bound or legally issued without fully executed digital signatures on mandatory state-specific disclosure forms.
 ---
 
 ## Rule-105: Missing Mandatory Regulatory Signatures
 
-* **Rule Statement:** No policy may be bound or legally issued without fully executed digital signatures on mandatory state-specific disclosure forms (e.g., Uninsured Motorist Selection forms).
-
-### 📋 Acceptance Criteria — Rule-105
+### Acceptance Criteria
 
 * **AC-1:** Electronic signature tokens must be returned from the DocuSign/e-sign wrapper API and appended to the policy file.
 
-### 🧪 Gherkin Test Cases — Rule-105
+### Gherkin Test Cases
 
 * **Scenario A (Forms Complete):**
   * Given All 3 mandatory state-specific selection forms contain valid signature metadata

@@ -15,7 +15,7 @@
       "category": "NewBusiness",
       "tags": ["payments", "binding"],
       "canonicalSlug": "rule-101-minimum-down-payment",
-      "policySummary": "A new business policy cannot proceed to a \"Bound\" or \"Issued\" status until the initial down payment (Installment #1) is fully collected and verified.",
+      "summary": "A new business policy cannot proceed to a \"Bound\" or \"Issued\" status until the initial down payment (Installment #1) is fully collected and verified.",
       "details": {
         "acceptanceCriteria": "- AC-1: The binding engine must verify a successful credit card authorization token or cleared ACH reference before switching the policy status from Quote to Bound.\n- AC-2: No temporary binder documents may be generated while the payment status is \"Pending\".",
         "gherkinTestCases": "- Scenario A (Payment Cleared):\n  - Given Quote Premium = $1,200.00; Down Payment Received = $100.00\n  - When the rule is evaluated\n  - Then Status Action = Allow Bind / Issue Policy\n- Scenario B (Payment Failed):\n  - Given Quote Premium = $1,200.00; Down Payment Received = $0.00 (Declined)\n  - When the rule is evaluated\n  - Then Status Action = BLOCK BINDING; Hard validation error thrown"

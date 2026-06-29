@@ -10,17 +10,16 @@ created: 2026-06-26
 lastReviewed: 2026-06-26
 version: 1
 canonicalSlug: rule-104-underwriting-hard-stop
+description: New business quotes with maximum hazard exposures cannot be auto-issued.
 ---
 
 ## Rule-104: Underwriting Hard-Stop Referral Triggers
 
-* **Rule Statement:** New business quotes containing maximum hazard exposures (e.g., active structural damage, knob-and-tube wiring, or open commercial liability claims) cannot be auto-issued.
-
-### 📋 Acceptance Criteria — Rule-104
+### Acceptance Criteria
 
 * **AC-1:** The system must scan the risk selection questionnaires for high-risk flags before enabling the "Issue" trigger.
 
-### 🧪 Gherkin Test Cases — Rule-104
+### Gherkin Test Cases
 
 * **Scenario A (Standard Risk):**
   * Given Application answers "No" to all major property hazard exposure questions

@@ -9,11 +9,12 @@ lastReviewed: 2026-06-26
 version: 1
 author:
   name: Karl Jucutan
+description: Installment billing rules covering bill date calculation: the invoice generation date must be set exactly 30 days prior to the installment due date.
 ---
 
 ## BRULS Installments Grouped Rules
 
-## Group Summary
+## Group Overview
 
 This grouped file contains installment and billing rules with progressive disclosure sections.
 
@@ -26,18 +27,17 @@ created: 2026-06-26
 lastReviewed: 2026-06-26
 version: 1
 canonicalSlug: rule-106-installment-bill-date
+description: The `BillDate` (invoice generation date) must be set exactly 30 days prior to the installment `DueDate`.
 ```
 
 ## Rule-106: Installment Bill Date Calculation
 
-* **Rule Statement:** The `BillDate` (invoice generation date) must be set exactly 30 days prior to the installment `DueDate`.
-
-### 📋 Acceptance Criteria — Rule-106
+### Acceptance Criteria
 
 * **AC-1:** The accounting engine calculates `BillDate = DueDate - 30 days`.
 * **AC-2:** If `BillDate` lands on a weekend, no date shifting is applied.
 
-### 🧪 Gherkin Test Cases — Rule-106
+### Gherkin Test Cases
 
 * **Scenario A (Standard Month):**
   * Given Installment `DueDate` = July 1st

@@ -10,18 +10,17 @@ created: 2026-06-26
 lastReviewed: 2026-06-26
 version: 1
 canonicalSlug: rule-102-prior-bad-debt-block
+description: New business applications cannot be bound if the applicant has an outstanding uncollectible balance from a previously canceled policy.
 ---
 
 ## Rule-102: Prior Bad Debt / Uncollectible Balance Block
 
-* **Rule Statement:** New business applications cannot be bound if the applicant has an outstanding, uncollectible balance from a previously canceled policy with the carrier.
-
-### 📋 Acceptance Criteria — Rule-102
+### Acceptance Criteria
 
 * **AC-1:** System must perform an automatic Social Security Number (SSN) or Federal Employer Identification Number (FEIN) lookup across the historical bad debt ledger.
 * **AC-2:** If a match is found, the system must freeze the application until the prior debt is fully cleared or a manual manager override is applied.
 
-### 🧪 Gherkin Test Cases — Rule-102
+### Gherkin Test Cases
 
 * **Scenario A (Clean History):**
   * Given Applicant has no matching historical records in the collections database

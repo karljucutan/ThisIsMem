@@ -1,6 +1,19 @@
 namespace API.Domain;
 
 /// <summary>
+/// Progressive disclosure levels for rule retrieval.
+/// Minimal: Layer 1 only (frontmatter) — fast, minimal payload
+/// Standard: Layer 1 + 2 (frontmatter + Description + Acceptance Criteria)
+/// Complete: Layer 1 + 2 + 3 (full technical details including Gherkin, Examples, Exceptions, Implementation Notes)
+/// </summary>
+public enum DisclosureLevel
+{
+    Minimal,
+    Standard,
+    Complete,
+}
+
+/// <summary>
 /// Query/result DTOs: Result shapes returned by search and retrieval features.
 /// Separate aggregate for tool outputs and query responses.
 /// </summary>
@@ -35,7 +48,7 @@ public sealed class MatchedFragment
     public double RelevanceScore { get; set; }
     public string SourcePath { get; set; } = string.Empty;
     public string Heading { get; set; } = string.Empty;
-    public string Section { get; set; } = string.Empty;  // e.g. "PolicySummary", "AcceptanceCriteria"
+    public string Section { get; set; } = string.Empty;  // e.g. "Summary", "AcceptanceCriteria"
 }
 
 public sealed class RuleMetadata
