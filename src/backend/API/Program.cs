@@ -1,4 +1,5 @@
-using API.Features.Rules.Queries;
+using API.Features.Rules.Commands;
+using API.Features.Rules.MafTools;
 using API.Infrastructure.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,7 +9,20 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
 builder.Services.Configure<KnowledgeBaseOptions>(builder.Configuration.GetSection(KnowledgeBaseOptions.SectionName));
-builder.Services.AddScoped<SearchRulesHandler>();
+
+// Register rule search services (CQRS pattern)
+builder.Services.AddScoped<SearchRulesCommandHandler>();             // Core search handler: query execution
+
+// TODO: Register MAF Agent Framework when available
+// Uncomment when Microsoft.AgentFramework NuGet is added
+//
+// builder.Services.AddMafAgent()
+//     .RegisterTool<SearchRulesToolHandler>(
+//         name: SearchRulesToolDefinition.ToolName,
+//         description: SearchRulesToolDefinition.ToolDescription
+//     );
+//
+// See MAF_INTEGRATION.md for detailed setup instructions
 
 var app = builder.Build();
 
@@ -20,28 +34,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+// Map feature endpoints
+app.MapSearchRulesEndpoint();
+app.MapSearchRulesAgent();
 
 app.Run();
-
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

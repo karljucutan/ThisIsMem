@@ -1,107 +1,29 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using API.Domain;
-using API.Infrastructure.Options;
 using API.Infrastructure.Parsers;
 using Microsoft.Extensions.Options;
+using API.Infrastructure.Options;
 
-namespace API.Features.Rules.Queries;
-
-/// <summary>
-/// Progressive disclosure levels for rule retrieval.
-/// Minimal: Layer 1 only (frontmatter) — fast, minimal payload
-/// Standard: Layer 1 + 2 (frontmatter + Description + Acceptance Criteria)
-/// Complete: Layer 1 + 2 + 3 (full technical details including Gherkin, Examples, Exceptions, Implementation Notes)
-/// </summary>
-public enum DisclosureLevel
-{
-    Minimal,
-    Standard,
-    Complete,
-}
+namespace API.Features.Rules.Commands;
 
 /// <summary>
-/// Query/result DTOs: Result shapes returned by search and retrieval features.
-/// Separate aggregate for tool outputs and query responses.
+/// Core handler for searching rules across the knowledge base.
+/// Implements progressive disclosure with scoring and matching.
+/// Used by both REST endpoints and agent tool handlers.
 /// </summary>
-public sealed class RuleQueryResult
-{
-    // Layer 1: Quick answer (required)
-    public string AnswerSummary { get; set; } = string.Empty;
-    public ConfidenceLevel Confidence { get; set; } = ConfidenceLevel.Medium;
-    public List<RuleReference> TopSources { get; set; } = [];
-
-    // Layer 2: Supporting details (optional expand)
-    public string? Rationale { get; set; }
-    public List<MatchedFragment> SupportingMatches { get; set; } = [];
-    public List<string> RelatedRuleIds { get; set; } = [];
-
-    // Layer 3: Full context (optional expand)
-    public List<RuleMetadata> RuleMetadata { get; set; } = [];
-    public string? FullSourceMarkdown { get; set; }
-}
-
-public sealed class RuleReference
-{
-    public string RuleId { get; set; } = string.Empty;
-    public string Title { get; set; } = string.Empty;
-    public string Domain { get; set; } = string.Empty;
-    public string FilePath { get; set; } = string.Empty;
-}
-
-public sealed class MatchedFragment
-{
-    public string Quote { get; set; } = string.Empty;
-    public double RelevanceScore { get; set; }
-    public string SourcePath { get; set; } = string.Empty;
-    public string Heading { get; set; } = string.Empty;
-    public string Section { get; set; } = string.Empty;  // e.g. "Summary", "AcceptanceCriteria"
-}
-
-public sealed class RuleMetadata
-{
-    public string Id { get; set; } = string.Empty;
-    public string Title { get; set; } = string.Empty;
-    public string Domain { get; set; } = string.Empty;
-    public List<string> Tags { get; set; } = [];
-    public string? Owner { get; set; }
-    public string LastReviewed { get; set; } = string.Empty;
-    public int Version { get; set; }
-}
-
-public enum ConfidenceLevel
-{
-    Low = 1,
-    Medium = 2,
-    High = 3
-}
-
-/// <summary>
-/// Example: Search rules by content (to be used by Agent Framework for tool invocation).
-/// Returns structured results with progressive disclosure layers.
-/// </summary>
-public record SearchRulesQuery(
-    string Query,
-    string? Domain = null,
-    int TopResults = 5
-);
-
-public sealed class SearchRulesHandler
+public sealed class SearchRulesCommandHandler
 {
     private readonly AgentFrameworkToolParser _parser;
     private readonly string _knowledgeBasePath;
 
-    public SearchRulesHandler(IOptions<KnowledgeBaseOptions> options)
+    public SearchRulesCommandHandler(IOptions<KnowledgeBaseOptions> options)
     {
         _parser = new AgentFrameworkToolParser();
         _knowledgeBasePath = options.Value.Path;
     }
 
-    public List<RuleQueryResult> Handle(SearchRulesQuery query)
+    public List<SearchRulesResult> Handle(SearchRulesCommand query)
     {
-        var results = new List<RuleQueryResult>();
+        var results = new List<SearchRulesResult>();
         var knowledgeBaseDir = new DirectoryInfo(_knowledgeBasePath);
 
         if (!knowledgeBaseDir.Exists)
@@ -163,7 +85,7 @@ public sealed class SearchRulesHandler
             .Select(g =>
             {
                 var first = g.First();
-                return new RuleQueryResult
+                return new SearchRulesResult
                 {
                     AnswerSummary = first.rule.Description,
                     Confidence = ConfidenceLevel.High,
