@@ -27,9 +27,7 @@ flowchart TD
         subgraph SLICE["Vertical Slice — Rules Feature"]
             SRH["SearchRulesHandler\n(CQRS Query Handler)"]
             SRQ["SearchRulesQuery\n(record: Query, Domain, TopResults)"]
-            GRC["GetRuleCollectionHandler\n(CQRS Query Handler)"]
-            GRCQ["GetRuleCollectionQuery\n(record: FilePath, DisclosureLevel)"]
-            LRC["ListRuleCollectionsHandler\n(CQRS Query Handler)"]
+            RQR["RuleQueryResult + DTOs\n(AnswerSummary, Confidence, TopSources)"]
         end
 
         subgraph INFRA["Infrastructure"]
@@ -41,8 +39,6 @@ flowchart TD
             RCD["RuleCollectionDocument\n(Layer 1: metadata, tags, domain)"]
             RI["RuleItem\n(Layer 2: Summary, AcceptanceCriteria)"]
             RD["RuleDetails\n(Layer 3: Gherkin, Examples, Exceptions)"]
-            RQR["RuleQueryResult\n(AnswerSummary, Confidence, TopSources)"]
-            MF["MatchedFragment\n(Quote, RelevanceScore, SourcePath)"]
         end
     end
 
@@ -52,15 +48,12 @@ flowchart TD
 
     SF -- "POST /rules/search\n{query, domain}" --> AGENT
     TOOL -- "SearchRulesQuery" --> SRH
-    SRH -- "GetRuleCollectionQuery\n(Minimal)" --> GRC
-    GRC -- "ParseRuleCollectionMinimal/Standard/Complete" --> PARSER
-    LRC -- "ParseRuleCollectionMinimal" --> PARSER
+    SRH -- "iterates .md files\nParseRuleCollectionStandard" --> PARSER
     PARSER -- "reads" --> MD
     PARSER -- "produces" --> RCD
     RCD -- "contains" --> RI
     RI -- "lazy Layer 3" --> RD
     SRH -- "produces" --> RQR
-    RQR -- "fragments" --> MF
 
     subgraph PD["Progressive Disclosure Layers"]
         L1["Layer 1 — Minimal\nfrontmatter: id, title, tags, domain\nParseRuleCollectionMinimal()"]
@@ -80,7 +73,7 @@ flowchart TD
 2. **TanStack AI calls** the BFF **Server Function**, which POSTs to the .NET API
 3. **MAF Agent** receives the request, picks the `SearchRules` tool based on LLM reasoning
 4. **Tool invokes** `SearchRulesHandler` with a `SearchRulesQuery` (CQRS record)
-5. **Handler delegates** to `GetRuleCollectionHandler` / `AgentFrameworkToolParser` per file
-6. **Parser applies the `DisclosureLevel`** — `Minimal` for fast scan, `Standard` for summaries, `Complete` for full details — reading the markdown KB files
+5. **Handler** iterates all markdown files in the knowledge base
+6. **For each file, parser is called** with `ParseRuleCollectionStandard()` to extract Layer 1 + 2 (frontmatter + summaries) — supports `DisclosureLevel.Standard` 
 7. **Domain models** (`RuleCollectionDocument` → `RuleItem` → `RuleDetails`) carry only what was requested
 8. **`RuleQueryResult`** (with `AnswerSummary`, `Confidence`, `SupportingMatches`) flows back up to the Agent → API → Server Function → TanStack AI → streamed to the UI
