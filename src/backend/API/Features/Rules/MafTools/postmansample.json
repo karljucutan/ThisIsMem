@@ -1,0 +1,14 @@
+{
+  "threadId": "9f3f4fd2f3b8473b8d7f6a6f2f7a2b11",
+  "runId": "c7a8d5f6a1b04f9dbd2b2f2c6d8e4a10",
+  "state": null,
+  "messages": [
+    {
+      "role": "user",
+      "content": "What is the minimum down payment rule?"
+    }
+  ],
+  "tools": [],
+  "context": [],
+  "forwardedProps": null
+}

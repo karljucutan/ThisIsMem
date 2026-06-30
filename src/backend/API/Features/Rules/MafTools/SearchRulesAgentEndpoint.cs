@@ -65,17 +65,23 @@ public static class SearchRulesAgentEndpoint
                 tools: [AIFunctionFactory.Create(ExecuteSearchRulesTool)]);
 
         // Map the agent to the AGUI endpoint
-        app.MapAGUI("/api/agent", agent);
+        app.MapAGUI("/api/agent", agent)
+        .WithName("SearchRulesAgent")
+        .AddOpenApiOperationTransformer((operation, context, ct) =>
+        {
+            operation.Summary = "Agent search rules by content";
+            operation.Description = "Search the knowledge base for rules matching the query. Returns results with progressive disclosure layers: Layer 1 (quick answer), Layer 2 (supporting details), Layer 3 (full context).";
+            return Task.CompletedTask;
+        });
     }
 
-    /// <summary>
-    /// Executes the SearchRules tool when invoked by the AI agent.
-    /// Returns token-efficient plain text for LLM consumption.
-    /// </summary>
     [Description("Search the knowledge base for rules matching a query. Returns results with progressive disclosure layers (quick summary, supporting details, full context).")]
     private static async Task<string> ExecuteSearchRulesTool(
+        [Description("Natural-language query describing the user's question or intent (e.g., 'calculation of billdate from its duedate?')")]
         string query,
+        [Description("Optional domain filter to scope results to a specific business area (e.g., 'Billing').")]
         string? domain = null,
+        [Description("Maximum number of candidate rules to return from the retrieval layer (defaults to 5).")]
         int topResults = 5,
         SearchRulesCommandHandler? handler = null)
     {
