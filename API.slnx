@@ -1,3 +1,6 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
   <Project Path="src/backend/API/API.csproj" Id="515d01bb-cfa9-44d1-964e-9ebd82a090c2" />
 </Solution>

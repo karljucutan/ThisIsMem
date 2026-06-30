@@ -4,10 +4,8 @@ using Azure.Identity;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
 using Microsoft.Extensions.AI;
-using System.ComponentModel;
-using System.Text;
 
-namespace API.Features.Rules.MafTools;
+namespace API.Features.Rules.MafAgents;
 
 /// <summary>
 /// AGUI Agent endpoint for SearchRules tool invocation.
@@ -18,7 +16,7 @@ public static class SearchRulesAgentEndpoint
     /// <summary>
     /// Maps the AGUI agent endpoint with the SearchRules tool.
     /// </summary>
-    public static void MapSearchRulesAgent(this WebApplication app)
+    public static void AddAndMapRulesAssistantAgent(this WebApplication app)
     {
         // Get configuration
         string endpoint = app.Configuration["AZURE_OPENAI_ENDPOINT"]
@@ -26,7 +24,8 @@ public static class SearchRulesAgentEndpoint
         string deploymentName = app.Configuration["AZURE_OPENAI_DEPLOYMENT_NAME"]
            ?? throw new InvalidOperationException("AZURE_OPENAI_DEPLOYMENT_NAME is not set.");
 
-        // Create the AI agent with Azure OpenAI
+        var searchRulesAgentTool = app.Services.GetRequiredService<SearchRulesAgentTool>();
+
         AIAgent agent = new AIProjectClient(
             new Uri(endpoint),
             new DefaultAzureCredential())
@@ -62,7 +61,7 @@ public static class SearchRulesAgentEndpoint
 
                 Fallback:
                 - If no sufficiently relevant rule is found, respond exactly: No business rule found for this scenario.",
-                tools: [AIFunctionFactory.Create(ExecuteSearchRulesTool)]);
+                tools: [AIFunctionFactory.Create(searchRulesAgentTool.ExecuteSearchRulesTool)]);
 
         // Map the agent to the AGUI endpoint
         app.MapAGUI("/api/agent", agent)
@@ -73,69 +72,5 @@ public static class SearchRulesAgentEndpoint
             operation.Description = "Search the knowledge base for rules matching the query. Returns results with progressive disclosure layers: Layer 1 (quick answer), Layer 2 (supporting details), Layer 3 (full context).";
             return Task.CompletedTask;
         });
-    }
-
-    [Description("Search the knowledge base for rules matching a query. Returns results with progressive disclosure layers (quick summary, supporting details, full context).")]
-    private static async Task<string> ExecuteSearchRulesTool(
-        [Description("Natural-language query describing the user's question or intent (e.g., 'calculation of billdate from its duedate?')")]
-        string query,
-        [Description("Optional domain filter to scope results to a specific business area (e.g., 'Billing').")]
-        string? domain = null,
-        [Description("Maximum number of candidate rules to return from the retrieval layer (defaults to 5).")]
-        int topResults = 5,
-        SearchRulesCommandHandler? handler = null)
-    {
-        if (handler == null)
-            return "ERROR: Handler not available.";
-
-        try
-        {
-            var command = new SearchRulesCommand(
-                Query: query,
-                Domain: domain,
-                TopResults: topResults
-            );
-
-            var results = handler.Handle(command);
-
-            if (results.Count == 0)
-                return "No business rules found matching the query.";
-
-            var sb = new StringBuilder();
-            sb.AppendLine($"Found {results.Count} result(s) for: {query}");
-
-            for (int i = 0; i < results.Count; i++)
-            {
-                var r = results[i];
-                sb.AppendLine();
-                sb.AppendLine($"[{i + 1}] {r.AnswerSummary} (Confidence: {r.Confidence})");
-
-                if (r.TopSources.Count > 0)
-                {
-                    sb.AppendLine("  Sources:");
-                    foreach (var src in r.TopSources)
-                        sb.AppendLine($"  - {src.RuleId}: {src.Title} [{src.Domain}]");
-                }
-
-                if (!string.IsNullOrWhiteSpace(r.Rationale))
-                    sb.AppendLine($"  Rationale: {r.Rationale}");
-
-                if (r.SupportingMatches.Count > 0)
-                {
-                    sb.AppendLine("  Supporting matches:");
-                    foreach (var m in r.SupportingMatches)
-                        sb.AppendLine($"  - [{m.Heading} / {m.Section}] {m.Quote}");
-                }
-
-                if (r.RelatedRuleIds.Count > 0)
-                    sb.AppendLine($"  Related rules: {string.Join(", ", r.RelatedRuleIds)}");
-            }
-
-            return sb.ToString().TrimEnd();
-        }
-        catch (Exception ex)
-        {
-            return $"ERROR: {ex.Message}";
-        }
     }
 }

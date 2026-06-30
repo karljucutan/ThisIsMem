@@ -1,5 +1,5 @@
 using API.Features.Rules.Commands;
-using API.Features.Rules.MafTools;
+using API.Features.Rules.MafAgents;
 using API.Infrastructure.Options;
 using Scalar.AspNetCore;
 
@@ -14,6 +14,9 @@ builder.Services.Configure<KnowledgeBaseOptions>(builder.Configuration.GetSectio
 // Register rule search services (CQRS pattern)
 builder.Services.AddScoped<SearchRulesCommandHandler>();
 
+// Register the agent tools
+builder.Services.AddScoped<SearchRulesAgentTool>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -27,6 +30,6 @@ app.UseHttpsRedirection();
 
 // Map feature endpoints
 app.MapSearchRulesEndpoint();
-app.MapSearchRulesAgent();
+app.AddAndMapRulesAssistantAgent();
 
 app.Run();
