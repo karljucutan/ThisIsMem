@@ -14,8 +14,8 @@ builder.Services.Configure<KnowledgeBaseOptions>(builder.Configuration.GetSectio
 // Register rule search services (CQRS pattern)
 builder.Services.AddScoped<SearchRulesCommandHandler>();
 
-// Register the agent tools
-builder.Services.AddScoped<SearchRulesAgentTool>();
+// Register the AI agents
+builder.AddRuleAssistantAIAgent();
 
 var app = builder.Build();
 
@@ -30,6 +30,6 @@ app.UseHttpsRedirection();
 
 // Map feature endpoints
 app.MapSearchRulesEndpoint();
-app.AddAndMapRulesAssistantAgent();
+app.MapRulesAssistantAIAgent();
 
 app.Run();
