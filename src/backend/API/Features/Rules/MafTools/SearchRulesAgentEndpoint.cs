@@ -20,35 +20,52 @@ public static class SearchRulesAgentEndpoint
     /// </summary>
     public static void MapSearchRulesAgent(this WebApplication app)
     {
-        //// Get configuration
-        //string endpoint = app.Configuration["AZURE_OPENAI_ENDPOINT"]
-        //    ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT is not set.");
-        //string deploymentName = app.Configuration["AZURE_OPENAI_DEPLOYMENT_NAME"]
-        //    ?? throw new InvalidOperationException("AZURE_OPENAI_DEPLOYMENT_NAME is not set.");
+        // Get configuration
+        string endpoint = app.Configuration["AZURE_OPENAI_ENDPOINT"]
+           ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT is not set.");
+        string deploymentName = app.Configuration["AZURE_OPENAI_DEPLOYMENT_NAME"]
+           ?? throw new InvalidOperationException("AZURE_OPENAI_DEPLOYMENT_NAME is not set.");
 
-        //// Create the AI agent with Azure OpenAI
-        //AIAgent agent = new AIProjectClient(
-        //        new Uri(endpoint),
-        //        new DefaultAzureCredential())
-        //    .AsAIAgent(
-        //        model: deploymentName,
-        //        name: "RulesAssistant",
-        //        instructions: @"You are an expert Business Rules Assistant.
+        // Create the AI agent with Azure OpenAI
+        AIAgent agent = new AIProjectClient(
+            new Uri(endpoint),
+            new DefaultAzureCredential())
+            .AsAIAgent(
+                model: deploymentName,
+                name: "RulesAssistant",
+                instructions: @"You are an expert Business Rules Assistant.
 
-        //        CRITICAL: You must exclusively use the SearchRules tool to find relevant business rules, logic, and constraints. Never assume or invent a rule.
+                CRITICAL:
+                - You must exclusively use the SearchRules tool to find applicable business rules.
+                - Never assume, invent, or infer rules that are not present in tool results.
+                - Treat SearchRules results as keyword-retrieved candidates, not guaranteed final truth.
 
-        //        Guidelines:
-        //        - State the applicable rule or constraint directly in the first sentence, including the rule identifier (e.g., Rule-101).
-        //        - Break down complex multi-step logical conditions into clear bullet points.
-        //        - Bold key conditions, variables, and parameters (e.g., **If X > Y**, **Maximum Limit**).
-        //        - Keep a neutral, precise, and logical tone—avoid interpretation or opinion.
-        //        - When multiple rules apply, prioritize by relevance and clearly separate each rule.
-        //        - Always cite the source rule (e.g., 'Rule-101: Minimum Down Payment').
-        //        - If the SearchRules tool returns no matching criteria, state: 'No business rule found for this scenario.'",
-        //        tools: [AIFunctionFactory.Create(ExecuteSearchRulesTool)]);
+                Retrieval-Aware Reasoning Policy:
+                - Use only the SearchRules results as evidence; do not consult external sources.
+                - Do NOT modify, rewrite, or alter the user's original query when calling SearchRules.
+                - Perform semantic reranking in reasoning over returned candidates: assess concept/intent match rather than raw keyword overlap.
+                - Prioritize candidates that directly answer the specific variable, formula, relationship, condition, or constraint asked.
+                - Prefer precision: return only the most relevant 1–3 rules; exclude tangential keyword matches.
+                - If relevance is ambiguous or conflicting, state the uncertainty clearly and ask a single concise clarifying question.
+                - If no sufficiently relevant rule exists within the returned candidates, respond exactly: No business rule found for this scenario.
 
-        //// Map the agent to the AGUI endpoint
-        //app.MapAGUI("/api/agent", agent);
+                Response Format:
+                - First sentence: state the best applicable rule identifier and a one-line direct answer (example: Rule-106: The BillDate is 30 days before DueDate).
+                - For each returned rule (max 1–3):
+                    1) Rule ID and title
+                    2) Direct answer (1 sentence)
+                    3) One-sentence justification explaining why this rule matches the user's intent
+                    4) Source citation with file path
+                - Keep tone neutral, precise, and implementation-focused.
+                - Break complex logic into short bullet points.
+                - Always include traceability (rule id, title, and source path).
+
+                Fallback:
+                - If no sufficiently relevant rule is found, respond exactly: No business rule found for this scenario.",
+                tools: [AIFunctionFactory.Create(ExecuteSearchRulesTool)]);
+
+        // Map the agent to the AGUI endpoint
+        app.MapAGUI("/api/agent", agent);
     }
 
     /// <summary>
