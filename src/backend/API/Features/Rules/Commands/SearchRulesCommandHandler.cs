@@ -27,9 +27,7 @@ public sealed class SearchRulesCommandHandler
         var knowledgeBaseDir = new DirectoryInfo(_knowledgeBasePath);
 
         if (!knowledgeBaseDir.Exists)
-        {
             return results;
-        }
 
         var markdownFiles = knowledgeBaseDir.GetFiles("*.md", SearchOption.AllDirectories);
         var matches = new List<(RuleCollectionDocument collection, RuleItem rule, MatchedFragment fragment)>();
