@@ -27,6 +27,8 @@ public sealed class SearchRulesAgentTool
     {
         try
         {
+            // Enhancement: add a DisclosureLevel parameter here so the agent can infer Minimal, Standard, or Complete
+            // from the user's prompt before calling the handler.
             var command = new SearchRulesCommand(
                 Query: query,
                 Domain: domain,

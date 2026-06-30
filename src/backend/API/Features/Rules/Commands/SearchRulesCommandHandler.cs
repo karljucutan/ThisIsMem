@@ -37,6 +37,7 @@ public sealed class SearchRulesCommandHandler
         {
             try
             {
+                // No way for the caller to pass a full disclosure yet.
                 // Standard = Layer 1 + 2: required to score and return Description and AcceptanceCriteria
                 var collection = _parser.ParseRuleCollectionStandard(file.FullName);
 
@@ -46,6 +47,8 @@ public sealed class SearchRulesCommandHandler
                 foreach (var rule in collection.Rules)
                 {
                     // Simple substring matching (can be enhanced with semantic search)
+                    // Lexical retrieval / keyword matching in IR(Information Retrieval) terms.
+                    // This is not semantic search; it scores literal text overlap.
                     var searchLower = query.Query.ToLower();
                     double relevance = CalculateRelevance(
                         query.Query, 
