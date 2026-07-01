@@ -47,7 +47,6 @@ public sealed class SearchRulesAgentTool
             {
                 var r = results[i];
                 sb.AppendLine();
-                sb.AppendLine($"[{i + 1}] {r.AnswerSummary} (Confidence: {r.Confidence})");
 
                 if (r.TopSources.Count > 0)
                 {

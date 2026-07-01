@@ -11,7 +11,7 @@ builder.Services.AddOpenApi();
 
 builder.Services.Configure<KnowledgeBaseOptions>(builder.Configuration.GetSection(KnowledgeBaseOptions.SectionName));
 
-// Register rule search services (CQRS pattern)
+// Register services
 builder.Services.AddScoped<SearchRulesCommandHandler>();
 
 // Register the AI agents
