@@ -1,5 +1,6 @@
 using API.Features.Rules.Commands;
 using API.Features.Rules.MafAgents;
+using API.Infrastructure.Extensions;
 using API.Infrastructure.Options;
 using Scalar.AspNetCore;
 
@@ -10,6 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
 builder.Services.Configure<KnowledgeBaseOptions>(builder.Configuration.GetSection(KnowledgeBaseOptions.SectionName));
+
+builder.Services.AddAppCors(builder.Configuration);
 
 // Register services
 builder.Services.AddScoped<SearchRulesCommandHandler>();
@@ -26,6 +29,7 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+app.UseAppCors();
 app.UseHttpsRedirection();
 
 // Map feature endpoints

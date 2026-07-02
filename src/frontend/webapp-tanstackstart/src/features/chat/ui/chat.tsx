@@ -1,6 +1,10 @@
 import { fetchServerSentEvents, useChat } from "@tanstack/ai-react";
 import { ArrowDownIcon, SendIcon } from "lucide-react";
-import { type SubmitEventHandler, useState } from "react";
+import {
+	type KeyboardEvent,
+	type SubmitEventHandler,
+	useState,
+} from "react";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import {
@@ -17,13 +21,15 @@ import {
 	MessageScrollerViewport,
 } from "#/components/ui/message-scroller.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
-import { chatStreamFn } from "#/features/chat/server/send-chat-message.ts";
 import { cn } from "#/lib/utils.ts";
+
+const backendBaseUrl = import.meta.env.VITE_BACKEND_API_BASE_URL;
+const agentStreamUrl = new URL("/api/agent", backendBaseUrl).toString();
 
 export function Chat() {
 	const [input, setInput] = useState("");
 	const { messages, sendMessage, isLoading } = useChat({
-		connection: fetchServerSentEvents(chatStreamFn.url),
+		connection: fetchServerSentEvents(agentStreamUrl),
 	});
 
 	const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
@@ -35,6 +41,22 @@ export function Chat() {
 
 		await sendMessage(trimmed);
 		setInput("");
+	};
+
+	const handleKeyDown = async (event: KeyboardEvent<HTMLTextAreaElement>) => {
+		if (
+			event.key === "Enter" &&
+			!event.shiftKey &&
+			!event.ctrlKey &&
+			!event.altKey &&
+			!event.metaKey
+		) {
+			event.preventDefault();
+			const trimmed = input.trim();
+			if (!trimmed || isLoading) return;
+			await sendMessage(trimmed);
+			setInput("");
+		}
 	};
 
 	return (
@@ -57,57 +79,53 @@ export function Chat() {
 									</div>
 								) : null}
 
-								{messages.map((item) => (
-									<div
-										key={item.id}
-										className={cn(
-											"max-w-3xl rounded-xl border p-4 shadow-sm",
-											item.role === "user"
-												? "ml-auto border-border bg-muted"
-												: "mr-auto border-border bg-card",
-										)}
-									>
-										<div className="mb-2 flex items-center gap-2">
-											<Badge
-												variant={
-													item.role === "assistant" ? "secondary" : "outline"
-												}
-											>
-												{item.role === "assistant" ? "Assistant" : "You"}
-											</Badge>
+								{messages.map((item, msgIndex) => {
+									const stableMessageId = item.id ?? `msg-${msgIndex}`;
+									return (
+										<div
+											key={stableMessageId}
+											className={cn(
+												"max-w-3xl rounded-xl border p-4 shadow-sm",
+												item.role === "user"
+													? "ml-auto border-border bg-muted"
+													: "mr-auto border-border bg-card",
+											)}
+										>
+											<div className="mb-2 flex items-center gap-2">
+												<Badge
+													variant={
+														item.role === "assistant" ? "secondary" : "outline"
+													}
+												>
+													{item.role === "assistant" ? "Assistant" : "You"}
+												</Badge>
+											</div>
+
+											<p className="m-0 whitespace-pre-wrap wrap-anywhere text-sm leading-relaxed">
+												{item.parts.map((part, partIndex) => {
+													const partKey = `${stableMessageId}-part-${partIndex}-${part.type}`;
+
+													if (part.type === "text") {
+														return <span key={partKey}>{part.content}</span>;
+													}
+
+													if (part.type === "thinking") {
+														return (
+															<span
+																key={partKey}
+																className="block italic text-muted-foreground"
+															>
+																Thinking: {part.content}
+															</span>
+														);
+													}
+
+													return null;
+												})}
+											</p>
 										</div>
-
-										<p className="m-0 whitespace-pre-wrap wrap-anywhere text-sm leading-relaxed">
-											{item.parts.map((part) => {
-												const content =
-													part.type === "text" || part.type === "thinking"
-														? part.content
-														: "";
-
-												if (part.type === "text") {
-													return (
-														<span key={`${item.id}-${part.type}-${content}`}>
-															{part.content}
-														</span>
-													);
-												}
-
-												if (part.type === "thinking") {
-													return (
-														<span
-															key={`${item.id}-${part.type}-${content}`}
-															className="block italic text-muted-foreground"
-														>
-															Thinking: {part.content}
-														</span>
-													);
-												}
-
-												return null;
-											})}
-										</p>
-									</div>
-								))}
+									);
+								})}
 							</MessageScrollerContent>
 						</MessageScrollerViewport>
 
@@ -119,6 +137,7 @@ export function Chat() {
 								className="min-h-16 flex-1 resize-none"
 								value={input}
 								onChange={(event) => setInput(event.target.value)}
+								onKeyDown={handleKeyDown}
 								placeholder="Ask a business-rules question..."
 								rows={2}
 								disabled={isLoading}
@@ -135,7 +154,6 @@ export function Chat() {
 
 						<MessageScrollerButton className="mb-24" size="icon-sm">
 							<ArrowDownIcon />
-							<span className="sr-only">Jump to latest</span>
 						</MessageScrollerButton>
 					</MessageScroller>
 				</MessageScrollerProvider>

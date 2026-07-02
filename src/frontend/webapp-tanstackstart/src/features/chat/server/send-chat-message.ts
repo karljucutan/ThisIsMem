@@ -1,6 +1,7 @@
 import { chatParamsFromRequestBody } from "@tanstack/ai";
 import { createServerFn } from "@tanstack/react-start";
 
+// This server function is not being used.
 export const chatStreamFn = createServerFn({ method: "POST" }).handler(
 	async ({ data }) => {
 		const params = await chatParamsFromRequestBody(data);

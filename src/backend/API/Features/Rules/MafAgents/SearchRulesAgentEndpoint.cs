@@ -15,12 +15,12 @@ public static class SearchRulesAgentEndpoint
     {
         // app.MapAGUI("/api/agent", agent)
         app.MapAGUI(agentName: "RulesAssistantAIAgent", pattern: "/api/agent")
-        .WithName("RulesAssistantAIAgent")
-        .AddOpenApiOperationTransformer((operation, context, ct) =>
-        {
-            operation.Summary = "Agent search rules by content";
-            operation.Description = "Search the knowledge base for rules matching the query. Returns results with progressive disclosure layers: Layer 1 (quick answer), Layer 2 (supporting details), Layer 3 (full context).";
-            return Task.CompletedTask;
-        });
+            .WithName("RulesAssistantAIAgent")
+            .AddOpenApiOperationTransformer((operation, context, ct) =>
+            {
+                operation.Summary = "Agent search rules by content";
+                operation.Description = "Search the knowledge base for rules matching the query. Returns results with progressive disclosure layers: Layer 1 (quick answer), Layer 2 (supporting details), Layer 3 (full context).";
+                return Task.CompletedTask;
+            });
     }
 }
