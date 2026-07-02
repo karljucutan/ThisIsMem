@@ -99,7 +99,7 @@ function MessageScroller({
 	return (
 		<section
 			className={cn(
-				"relative flex min-h-0 flex-1 flex-col rounded-xl border bg-background/70",
+				"relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-background/70",
 				className,
 			)}
 		>
@@ -144,7 +144,7 @@ function MessageScrollerButton({
 	}
 
 	return (
-		<div className="pointer-events-none absolute right-4 bottom-4 z-10">
+		<div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-center px-4">
 			<Button
 				className={cn(
 					"pointer-events-auto rounded-full shadow-lg shadow-black/10",

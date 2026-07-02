@@ -1,5 +1,5 @@
 import { fetchServerSentEvents, useChat } from "@tanstack/ai-react";
-import { SendIcon } from "lucide-react";
+import { ArrowDownIcon, SendIcon } from "lucide-react";
 import { type SubmitEventHandler, useState } from "react";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
@@ -46,83 +46,85 @@ export function Chat() {
 			</CardHeader>
 			<CardContent className="grid gap-4">
 				<MessageScrollerProvider>
-					<div className="grid gap-4">
-						<MessageScroller className="h-[52vh] min-h-80">
-							<MessageScrollerViewport>
-								<MessageScrollerContent>
-									{messages.length === 0 ? (
-										<div className="rounded-xl border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-											Start by asking a specific business-rule question such as
-											eligibility, down payment, underwriting, or billing
-											timelines.
+					<MessageScroller className="h-[64vh] min-h-96">
+						<MessageScrollerViewport>
+							<MessageScrollerContent className="pb-1">
+								{messages.length === 0 ? (
+									<div className="rounded-xl border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">
+										Start by asking a specific business-rule question such as
+										eligibility, down payment, underwriting, or billing
+										timelines.
+									</div>
+								) : null}
+
+								{messages.map((item) => (
+									<div
+										key={item.id}
+										className={cn(
+											"max-w-3xl rounded-xl border p-4 shadow-sm",
+											item.role === "user"
+												? "ml-auto border-border bg-muted"
+												: "mr-auto border-border bg-card",
+										)}
+									>
+										<div className="mb-2 flex items-center gap-2">
+											<Badge
+												variant={
+													item.role === "assistant" ? "secondary" : "outline"
+												}
+											>
+												{item.role === "assistant" ? "Assistant" : "You"}
+											</Badge>
 										</div>
-									) : null}
 
-									{messages.map((item) => (
-										<div
-											key={item.id}
-											className={cn(
-												"max-w-3xl rounded-xl border p-4 shadow-sm",
-												item.role === "user"
-													? "ml-auto border-border bg-muted"
-													: "mr-auto border-border bg-card",
-											)}
-										>
-											<div className="mb-2 flex items-center gap-2">
-												<Badge
-													variant={
-														item.role === "assistant" ? "secondary" : "outline"
-													}
-												>
-													{item.role === "assistant" ? "Assistant" : "You"}
-												</Badge>
-											</div>
+										<p className="m-0 whitespace-pre-wrap wrap-anywhere text-sm leading-relaxed">
+											{item.parts.map((part) => {
+												const content =
+													part.type === "text" || part.type === "thinking"
+														? part.content
+														: "";
 
-											<p className="m-0 whitespace-pre-wrap text-sm leading-relaxed">
-												{item.parts.map((part) => {
-													const content =
-														part.type === "text" || part.type === "thinking"
-															? part.content
-															: "";
+												if (part.type === "text") {
+													return (
+														<span key={`${item.id}-${part.type}-${content}`}>
+															{part.content}
+														</span>
+													);
+												}
 
-													if (part.type === "text") {
-														return (
-															<span key={`${item.id}-${part.type}-${content}`}>
-																{part.content}
-															</span>
-														);
-													}
+												if (part.type === "thinking") {
+													return (
+														<span
+															key={`${item.id}-${part.type}-${content}`}
+															className="block italic text-muted-foreground"
+														>
+															Thinking: {part.content}
+														</span>
+													);
+												}
 
-													if (part.type === "thinking") {
-														return (
-															<span
-																key={`${item.id}-${part.type}-${content}`}
-																className="block italic text-muted-foreground"
-															>
-																Thinking: {part.content}
-															</span>
-														);
-													}
+												return null;
+											})}
+										</p>
+									</div>
+								))}
+							</MessageScrollerContent>
+						</MessageScrollerViewport>
 
-													return null;
-												})}
-											</p>
-										</div>
-									))}
-								</MessageScrollerContent>
-							</MessageScrollerViewport>
-							<MessageScrollerButton />
-						</MessageScroller>
-
-						<form className="grid gap-3" onSubmit={handleSubmit}>
+						<form
+							className="mt-auto flex items-center gap-3 border-t border-border bg-background/95 p-4 backdrop-blur"
+							onSubmit={handleSubmit}
+						>
 							<Textarea
+								className="min-h-16 flex-1 resize-none"
 								value={input}
 								onChange={(event) => setInput(event.target.value)}
 								placeholder="Ask a business-rules question..."
-								rows={4}
+								rows={2}
 								disabled={isLoading}
 							/>
 							<Button
+								className="shrink-0"
 								disabled={isLoading || input.trim().length === 0}
 								type="submit"
 							>
@@ -130,7 +132,12 @@ export function Chat() {
 								{isLoading ? "Sending" : "Send"}
 							</Button>
 						</form>
-					</div>
+
+						<MessageScrollerButton className="mb-24" size="icon-sm">
+							<ArrowDownIcon />
+							<span className="sr-only">Jump to latest</span>
+						</MessageScrollerButton>
+					</MessageScroller>
 				</MessageScrollerProvider>
 			</CardContent>
 		</Card>
