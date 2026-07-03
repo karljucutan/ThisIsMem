@@ -1,5 +1,5 @@
 import { fetchServerSentEvents, useChat } from "@tanstack/ai-react";
-import { ArrowDownIcon, SendIcon } from "lucide-react";
+import { ArrowDownIcon, ChevronRightIcon, SendIcon } from "lucide-react";
 import { type KeyboardEvent, type SubmitEventHandler, useState } from "react";
 import { ModeToggle } from "#/components/mode-toggle";
 import { Badge } from "#/components/ui/badge.tsx";
@@ -80,7 +80,7 @@ export function Chat() {
 							<MessageScrollerContent className="pb-1">
 								{messages.length === 0 ? (
 									<div className="rounded-xl border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-										Start with a question like: “What’s the minimum down
+										Start with a question like: “What's the minimum down
 										payment?”, “Can this be backdated?”, or “What stops
 										underwriting?”.
 									</div>
@@ -118,12 +118,23 @@ export function Chat() {
 
 													if (part.type === "thinking") {
 														return (
-															<span
+															<details
 																key={partKey}
-																className="block italic text-muted-foreground"
+																className="group my-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-muted-foreground"
+																open={isLoading}
 															>
-																Thinking: {part.content}
-															</span>
+																<summary className="cursor-pointer list-none text-sm font-medium italic text-muted-foreground outline-none">
+																	<span className="inline-flex items-center gap-1">
+																		<span>
+																			{isLoading ? "Thinking" : "Reasoning"}
+																		</span>
+																		<ChevronRightIcon className="h-3 w-3 transition-transform duration-200 group-open:rotate-90" />
+																	</span>
+																</summary>
+																<span className="mt-2 block whitespace-pre-wrap wrap-anywhere text-sm leading-relaxed">
+																	{part.content}
+																</span>
+															</details>
 														);
 													}
 

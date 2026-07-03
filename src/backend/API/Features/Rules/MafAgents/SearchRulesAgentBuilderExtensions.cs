@@ -73,6 +73,18 @@ public static class SearchRulesAgentBuilderExtensions
                               Fallback:
                               - If no sufficiently relevant rule is found, respond exactly: No business rule found for this scenario.",
                         tools: [AIFunctionFactory.Create(tool.ExecuteSearchRulesTool)],
+                        clientFactory: innerClient => innerClient
+                            .AsBuilder()
+                            .ConfigureOptions(options =>
+                            {
+                                // Forces gpt-5-mini to output its internal thought chain
+                                options.Reasoning = new ReasoningOptions
+                                {
+                                    Effort = ReasoningEffort.Medium,
+                                    Output = ReasoningOutput.Full
+                                };
+                            })
+                            .Build(),
                         services: serviceProvider // Gives the tool access to scoped DI dependencies
                     );
 
