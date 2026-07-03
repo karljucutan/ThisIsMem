@@ -136,5 +136,8 @@ public record SearchRulesCommand(
     string? Domain = null,
     
     [Description("Maximum number of results to return. Defaults to 5.")]
-    int TopResults = 5
+    int TopResults = 5,
+
+    [Description("Disclosure level for parsing the rule source. Minimal returns Layer 1 only, Standard returns Layers 1 and 2, Complete returns Layers 1, 2, and 3.")]
+    DisclosureLevel DisclosureLevel = DisclosureLevel.Minimal
 );

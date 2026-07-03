@@ -17,27 +17,15 @@ public sealed class SearchRulesAgentTool
         _scopeFactory = scopeFactory;
     }
 
-    [Description("Search the knowledge base for rules matching a query. Returns results with progressive disclosure layers (quick summary, supporting details, full context).")]
+    [Description("Search the knowledge base for rules using a structured SearchRulesCommand. Default disclosure is Layer 1 (quick summary), with Layer 2 and Layer 3 available when explicitly requested.")]
     public Task<string> ExecuteSearchRulesTool(
-        [Description("Natural-language query describing the user's question or intent (e.g., 'calculation of billdate from its duedate?')")]
-        string query,
-        [Description("Optional domain filter to scope results to a specific business area (e.g., 'Billing').")]
-        string? domain = null,
-        [Description("Maximum number of candidate rules to return from the retrieval layer (defaults to 5).")]
-        int topResults = 5)
+        [Description("Structured search parameters. The AI will also see field-level descriptions for Query, Domain, TopResults, and DisclosureLevel.")]
+        SearchRulesCommand command)
     {
         try
         {
             using var scope = _scopeFactory.CreateScope();
             var handler = scope.ServiceProvider.GetRequiredService<SearchRulesCommandHandler>();
-
-            // Enhancement: add a DisclosureLevel parameter here so the agent can infer Minimal, Standard, or Complete
-            // from the user's prompt before calling the handler.
-            var command = new SearchRulesCommand(
-                Query: query,
-                Domain: domain,
-                TopResults: topResults
-            );
 
             var results = handler.Handle(command);
 
@@ -45,18 +33,21 @@ public sealed class SearchRulesAgentTool
                 return Task.FromResult("No business rules found matching the query.");
 
             var sb = new StringBuilder();
-            sb.AppendLine($"Found {results.Count} result(s) for: {query}");
+            sb.AppendLine($"Found {results.Count} result(s) for: {command.Query}");
 
             for (int i = 0; i < results.Count; i++)
             {
                 var r = results[i];
                 sb.AppendLine();
 
+                sb.AppendLine($"{i + 1}. {r.TopSources.FirstOrDefault()?.RuleId ?? "Unknown rule"}: {r.TopSources.FirstOrDefault()?.Title ?? "Untitled rule"}");
+                sb.AppendLine($"   Answer: {r.AnswerSummary}");
+
                 if (r.TopSources.Count > 0)
                 {
                     sb.AppendLine("  Sources:");
                     foreach (var src in r.TopSources)
-                        sb.AppendLine($"  - {src.RuleId}: {src.Title} [{src.Domain}]");
+                        sb.AppendLine($"  - {src.RuleId}: {src.Title} [{src.Domain}] {src.FilePath}");
                 }
 
                 if (!string.IsNullOrWhiteSpace(r.Rationale))
@@ -66,11 +57,24 @@ public sealed class SearchRulesAgentTool
                 {
                     sb.AppendLine("  Supporting matches:");
                     foreach (var m in r.SupportingMatches)
-                        sb.AppendLine($"  - [{m.Heading} / {m.Section}] {m.Quote}");
+                        sb.AppendLine($"  - [{m.Heading} / {m.Section}] {m.Quote} ({m.SourcePath})");
                 }
 
                 if (r.RelatedRuleIds.Count > 0)
                     sb.AppendLine($"  Related rules: {string.Join(", ", r.RelatedRuleIds)}");
+
+                if (r.RuleMetadata.Count > 0)
+                {
+                    sb.AppendLine("  Metadata:");
+                    foreach (var metadata in r.RuleMetadata)
+                        sb.AppendLine($"  - {metadata.Id}: {metadata.Title} [{metadata.Domain}] v{metadata.Version}");
+                }
+
+                if (!string.IsNullOrWhiteSpace(r.FullSourceMarkdown))
+                {
+                    sb.AppendLine("  Full source markdown:");
+                    sb.AppendLine(r.FullSourceMarkdown);
+                }
             }
 
             return Task.FromResult(sb.ToString().TrimEnd());

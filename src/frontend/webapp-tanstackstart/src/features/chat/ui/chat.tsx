@@ -1,10 +1,6 @@
 import { fetchServerSentEvents, useChat } from "@tanstack/ai-react";
 import { ArrowDownIcon, SendIcon } from "lucide-react";
-import {
-	type KeyboardEvent,
-	type SubmitEventHandler,
-	useState,
-} from "react";
+import { type KeyboardEvent, type SubmitEventHandler, useState } from "react";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import {
@@ -62,9 +58,16 @@ export function Chat() {
 	return (
 		<Card className="shadow-sm">
 			<CardHeader className="gap-3">
+				<Badge className="w-fit" variant="secondary">
+					AI Assistant
+				</Badge>
 				<CardTitle className="text-3xl font-semibold tracking-tight md:text-4xl">
-					Rules Assistant
+					This is Mem
 				</CardTitle>
+				<p className="max-w-2xl text-sm text-muted-foreground md:text-base">
+					Ask Mem anything about the rules, and it will help you find the right
+					answer fast.
+				</p>
 			</CardHeader>
 			<CardContent className="grid gap-4">
 				<MessageScrollerProvider>
@@ -73,9 +76,9 @@ export function Chat() {
 							<MessageScrollerContent className="pb-1">
 								{messages.length === 0 ? (
 									<div className="rounded-xl border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-										Start by asking a specific business-rule question such as
-										eligibility, down payment, underwriting, or billing
-										timelines.
+										Start with a question like: “What’s the minimum down
+										payment?”, “Can this be backdated?”, or “What stops
+										underwriting?”.
 									</div>
 								) : null}
 
@@ -97,7 +100,7 @@ export function Chat() {
 														item.role === "assistant" ? "secondary" : "outline"
 													}
 												>
-													{item.role === "assistant" ? "Assistant" : "You"}
+													{item.role === "assistant" ? "Mem" : "You"}
 												</Badge>
 											</div>
 

@@ -1,6 +1,6 @@
 # Architecture Diagram
 
-Full system flow: TanStack Start (BFF) → ASP.NET Core API → Microsoft Agent Framework → Knowledge Base, with progressive disclosure via `AgentFrameworkToolParser`.
+Full system flow: TanStack Start (BFF) → ASP.NET Core API → Microsoft Agent Framework → Knowledge Base, with progressive disclosure defaulting to Layer 1 / Minimal through `SearchRulesCommand` and `AgentFrameworkToolParser`.
 
 ```mermaid
 flowchart TD
@@ -48,7 +48,7 @@ flowchart TD
 
     SF -- "POST /rules/search\n{query, domain}" --> AGENT
     TOOL -- "SearchRulesQuery" --> SRH
-    SRH -- "iterates .md files\nParseRuleCollectionStandard" --> PARSER
+    SRH -- "iterates .md files\nParseRuleCollectionMinimal by default" --> PARSER
     PARSER -- "reads" --> MD
     PARSER -- "produces" --> RCD
     RCD -- "contains" --> RI
@@ -74,6 +74,6 @@ flowchart TD
 3. **MAF Agent** receives the request, picks the `SearchRules` tool based on LLM reasoning
 4. **Tool invokes** `SearchRulesHandler` with a `SearchRulesQuery` (CQRS record)
 5. **Handler** iterates all markdown files in the knowledge base
-6. **For each file, parser is called** with `ParseRuleCollectionStandard()` to extract Layer 1 + 2 (frontmatter + summaries) — supports `DisclosureLevel.Standard` 
-7. **Domain models** (`RuleCollectionDocument` → `RuleItem` → `RuleDetails`) carry only what was requested
-8. **`RuleQueryResult`** (with `AnswerSummary`, `Confidence`, `SupportingMatches`) flows back up to the Agent → API → Server Function → TanStack AI → streamed to the UI
+6. **For each file, parser is called** with `ParseRuleCollectionMinimal()` by default to extract Layer 1 only (frontmatter + metadata) — `DisclosureLevel.Standard` and `DisclosureLevel.Complete` remain explicit opt-ins
+7. **Domain models** (`RuleCollectionDocument` → `RuleItem` → `RuleDetails`) carry layer-specific data, while the search result DTO keeps Layer 1 fields front and center
+8. **`SearchRulesResult`** (with `AnswerSummary`, `Confidence`, `TopSources`, plus layer 2/3-capable fields) flows back up to the Agent → API → Server Function → TanStack AI → streamed to the UI

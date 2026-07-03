@@ -18,7 +18,7 @@ public static class SearchRulesEndpoint
             .AddOpenApiOperationTransformer((operation, context, ct) =>
             {
                 operation.Summary = "Search rules by content";
-                operation.Description = "Search the knowledge base for rules matching the query. Returns results with progressive disclosure layers: Layer 1 (quick answer), Layer 2 (supporting details), Layer 3 (full context).";
+                operation.Description = "Search the knowledge base for rules matching the query. Default disclosure is Layer 1 (quick answer); Layer 2 and Layer 3 are explicit opt-ins via DisclosureLevel.";
                 return Task.CompletedTask;
             });
     }

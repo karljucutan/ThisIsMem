@@ -4,15 +4,13 @@ date: 2026-06-26
 version: 1.0
 ---
 
-# Agent Framework Tool Parser - Implementation Guide
+## Agent Framework Tool Parser - Implementation Guide
 
 ## Overview
 
 Implemented a **YamlDotNet-based parser** for Microsoft Agent Framework tools that supports **progressive disclosure** across three layers:
 
-- **Layer 1** (fast): YAML frontmatter only
-- **Layer 2** (medium): Add section summaries (summary, acceptance criteria)
-- **Layer 3** (full): Add technical details (test cases, examples, exceptions)
+Current search flows default to **Layer 1 / Minimal** unless the caller explicitly asks for Standard or Complete.
 
 ## Why YamlDotNet?
 
@@ -27,7 +25,7 @@ Implemented a **YamlDotNet-based parser** for Microsoft Agent Framework tools th
 
 ## Architecture
 
-```
+```text
 Domain/
   └─ RuleAgentTool.cs          # Progressive disclosure DTOs
 Infrastructure/Parsers/
@@ -39,7 +37,7 @@ Features/Rules/Queries/
 ### Key Design Decisions
 
 1. **Separate from BusinessRulesParser** - Keep existing parser intact for backward compatibility
-2. **Lazy-loading support** - Parse only what's needed via `loadFullContent` parameter
+2. **Explicit disclosure selection** - Parse only what's needed via the `DisclosureLevel` on `SearchRulesCommand` or by calling the appropriate parser method directly
 3. **Vertical Slice Architecture** - Queries (request types) + Handlers form cohesive feature slices
 4. **Source traceability** - Every rule fragment includes file path, heading, and line number
 5. **Agent Framework alignment** - DTOs designed for tool registration and invocation
@@ -71,7 +69,7 @@ RuleDetails
   └─ ImplementationNotes
 ```
 
-### Agent Framework Result Shape (RuleQueryResult)
+### Agent Framework Result Shape (SearchRulesResult)
 
 ```csharp
 // Layer 1: Quick answer (default)
@@ -94,12 +92,13 @@ RuleDetails
 ### Public API
 
 ```csharp
-// Parse a single file (default: Layer 1+2, optional Layer 3)
-RuleCollectionDocument ParseRuleCollection(string filePath, bool loadFullContent = false)
+// Parse a single file at an explicit disclosure level
+RuleCollectionDocument ParseRuleCollectionMinimal(string filePath)
+RuleCollectionDocument ParseRuleCollectionStandard(string filePath)
+RuleCollectionDocument ParseRuleCollectionComplete(string filePath)
 
-// Lazy-loading example
-var layer1Only = parser.ParseRuleCollection(filePath, loadFullContent: false);
-var fullDetails = parser.ParseRuleCollection(filePath, loadFullContent: true);
+// Explicit minimal example
+var layer1Only = parser.ParseRuleCollectionMinimal(filePath);
 ```
 
 ### Parsing Flow
@@ -114,93 +113,66 @@ var fullDetails = parser.ParseRuleCollection(filePath, loadFullContent: true);
 ### Section Extraction
 
 Supports flexible heading variations:
-- `### Description` or `### 📋 Description`
-- `### Acceptance Criteria` or `### 📋 Acceptance Criteria`
-- `### Gherkin Test Cases` or `### 🧪 Gherkin Test Cases`
 
 Uses `ExtractMarkdownSection()` with start/end header arrays for robustness.
 
-## Vertical Slice Handlers (GetRuleCollection.cs)
+## Search Rules Handler
 
-### GetRuleCollectionHandler (Slice Pattern)
+### SearchRulesCommandHandler (Slice Pattern)
 
 ```csharp
 // Request
-var query = new GetRuleCollectionQuery(
-    FilePath: "bruls-billing-installments-grouped.md",
-    IncludeSummaries: true,
-    IncludeFullContent: false
+var query = new SearchRulesCommand(
+  Query: "minimum down payment",
+  DisclosureLevel: DisclosureLevel.Minimal
 );
 
 // Handler
-var handler = new GetRuleCollectionHandler(knowledgeBasePath);
-var collection = handler.Handle(query);
+var handler = new SearchRulesCommandHandler(options);
+var results = handler.Handle(query);
 ```
 
 **Disclosure control:**
-- `query.IncludeSummaries = false` → Layer 1 only
-- `query.IncludeSummaries = true` → Layers 1+2
-- `query.IncludeFullContent = true` → Layers 1+2+3
 
-### ListRuleCollectionsHandler
-
-Browse all rules in knowledge base with optional domain/tag filtering.
-Always returns Layer 1 (fast).
-
-### SearchRulesHandler
+The current search handler still computes relevance from rule title, description, and acceptance criteria, then returns Layer 1 fields first with additional layer-capable fields available in the DTO.
 
 Example search implementation with:
-- Substring matching (can be enhanced with semantic search/embeddings)
-- Relevance scoring
-- Top-N results
-- Domain filtering
-- Returns `RuleQueryResult` for Agent Framework tool output
 
 ## Usage Example
 
 ```csharp
 // In Program.cs or DI configuration
-var knowledgeBasePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "knowledgebase");
-services.AddScoped(_ => new AgentFrameworkToolParser());
-services.AddScoped(_ => new GetRuleCollectionHandler(knowledgeBasePath));
-services.AddScoped(_ => new SearchRulesHandler(knowledgeBasePath));
+services.AddScoped<SearchRulesCommandHandler>();
 
 // In endpoint handler
-[HttpGet("rules/{fileName}")]
-public IActionResult GetRule(string fileName, [FromQuery] bool fullContent = false)
+[HttpPost("rules/search")]
+public IActionResult SearchRules([FromBody] SearchRulesCommand command)
 {
-    var query = new GetRuleCollectionQuery(
-        FilePath: $"{fileName}.md",
-        IncludeSummaries: true,
-        IncludeFullContent: fullContent
-    );
-    
-    var collection = _handler.Handle(query);
-    return Ok(collection);
+  var results = _handler.Handle(command);
+  return Ok(results);
 }
 ```
 
 ## Integration with Microsoft Agent Framework
 
-The parser output (`RuleCollectionDocument` and `RuleQueryResult`) is designed for seamless Agent Framework tool registration:
+The parser output (`RuleCollectionDocument` and `SearchRulesResult`) is designed for seamless Agent Framework tool registration:
 
 1. **Tool Definition** - Map `SearchRulesHandler` to an Agent Framework tool
 2. **Tool Invocation** - Agent passes search query
-3. **Structured Response** - Returns `RuleQueryResult` with progressive disclosure layers
-4. **Client-side UX** - Frontend expands layers on user demand
+3. **Structured Response** - Returns `SearchRulesResult` with Layer 1 fields first, while later-layer fields remain available for expansion
+4. **Client-side UX** - Frontend can expand later layers on demand when the UI supports it
 
 Example tool registration (pseudocode):
+
 ```csharp
 agent.AddTool(
     name: "search_business_rules",
-    handler: (query) => searchHandler.Handle(new SearchRulesQuery(query)),
+    handler: (query) => searchHandler.Handle(new SearchRulesCommand(query)),
     schema: new ToolSchema { ... }
 );
 ```
 
 ## Dependencies Added
-
-- **YamlDotNet 15.1.1** - `API.csproj`
 
 ## Next Steps
 
@@ -213,7 +185,7 @@ agent.AddTool(
 
 ## File Structure
 
-```
+```text
 src/backend/API/
 ├── Domain/
 │   └── RuleAgentTool.cs          # Progressive disclosure DTOs

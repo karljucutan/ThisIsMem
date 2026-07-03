@@ -37,9 +37,13 @@ public sealed class SearchRulesCommandHandler
         {
             try
             {
-                // No way for the caller to pass a full disclosure yet.
-                // Standard = Layer 1 + 2: required to score and return Description and AcceptanceCriteria
-                var collection = _parser.ParseRuleCollectionStandard(file.FullName);
+                var collection = query.DisclosureLevel switch
+                {
+                    DisclosureLevel.Minimal => _parser.ParseRuleCollectionMinimal(file.FullName),
+                    DisclosureLevel.Standard => _parser.ParseRuleCollectionStandard(file.FullName),
+                    DisclosureLevel.Complete => _parser.ParseRuleCollectionComplete(file.FullName),
+                    _ => _parser.ParseRuleCollectionMinimal(file.FullName),
+                };
 
                 if (!string.IsNullOrEmpty(query.Domain) && collection.Domain != query.Domain)
                     continue;
