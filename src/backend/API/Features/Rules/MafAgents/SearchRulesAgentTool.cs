@@ -6,14 +6,15 @@ namespace API.Features.Rules.MafAgents;
 
 /// <summary>
 /// DI-backed tool implementation for rule retrieval used by the AGUI agent.
+/// Registered as singleton; creates a short-lived scope per invocation to resolve scoped dependencies.
 /// </summary>
 public sealed class SearchRulesAgentTool
 {
-    private readonly SearchRulesCommandHandler _handler;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public SearchRulesAgentTool(SearchRulesCommandHandler handler)
+    public SearchRulesAgentTool(IServiceScopeFactory scopeFactory)
     {
-        _handler = handler;
+        _scopeFactory = scopeFactory;
     }
 
     [Description("Search the knowledge base for rules matching a query. Returns results with progressive disclosure layers (quick summary, supporting details, full context).")]
@@ -27,6 +28,9 @@ public sealed class SearchRulesAgentTool
     {
         try
         {
+            using var scope = _scopeFactory.CreateScope();
+            var handler = scope.ServiceProvider.GetRequiredService<SearchRulesCommandHandler>();
+
             // Enhancement: add a DisclosureLevel parameter here so the agent can infer Minimal, Standard, or Complete
             // from the user's prompt before calling the handler.
             var command = new SearchRulesCommand(
@@ -35,7 +39,7 @@ public sealed class SearchRulesAgentTool
                 TopResults: topResults
             );
 
-            var results = _handler.Handle(command);
+            var results = handler.Handle(command);
 
             if (results.Count == 0)
                 return Task.FromResult("No business rules found matching the query.");

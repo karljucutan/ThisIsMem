@@ -20,6 +20,8 @@ builder.Services.AddScoped<SearchRulesCommandHandler>();
 // Register the AI agents
 builder.AddRuleAssistantAIAgent();
 
+builder.Services.AddAGUI();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
