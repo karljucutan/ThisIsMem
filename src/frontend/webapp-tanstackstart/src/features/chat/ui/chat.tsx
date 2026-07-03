@@ -1,6 +1,7 @@
 import { fetchServerSentEvents, useChat } from "@tanstack/ai-react";
 import { ArrowDownIcon, SendIcon } from "lucide-react";
 import { type KeyboardEvent, type SubmitEventHandler, useState } from "react";
+import { ModeToggle } from "#/components/mode-toggle";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import {
@@ -58,9 +59,12 @@ export function Chat() {
 	return (
 		<Card className="shadow-sm">
 			<CardHeader className="gap-3">
-				<Badge className="w-fit" variant="secondary">
-					AI Assistant
-				</Badge>
+				<div className="flex items-center justify-between">
+					<Badge className="w-fit" variant="secondary">
+						AI Assistant
+					</Badge>
+					<ModeToggle />
+				</div>
 				<CardTitle className="text-3xl font-semibold tracking-tight md:text-4xl">
 					This is Mem
 				</CardTitle>
