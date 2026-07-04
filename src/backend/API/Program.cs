@@ -16,6 +16,7 @@ builder.Services.AddAppCors(builder.Configuration);
 
 // Register services
 builder.Services.AddScoped<SearchRulesCommandHandler>();
+builder.Services.AddScoped<ExpandRuleCommandHandler>();
 
 // Register the AI agents
 builder.AddRuleAssistantAIAgent();
