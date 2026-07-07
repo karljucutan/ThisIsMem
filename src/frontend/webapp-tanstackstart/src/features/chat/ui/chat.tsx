@@ -66,7 +66,7 @@ export function Chat() {
 					<ModeToggle />
 				</div>
 				<CardTitle className="text-3xl font-semibold tracking-tight md:text-4xl">
-					This is Mem
+					This is Meeem
 				</CardTitle>
 				<p className="max-w-2xl text-sm text-muted-foreground md:text-base">
 					Ask Mem anything about the rules, and it will help you find the right
