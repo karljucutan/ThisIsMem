@@ -18,7 +18,7 @@ public sealed class SearchRulesCommandHandler
     public SearchRulesCommandHandler(IOptions<KnowledgeBaseOptions> options)
     {
         _parser = new AgentFrameworkToolParser();
-        _knowledgeBasePath = options.Value.Path;
+        _knowledgeBasePath = options.Value.BusinessRulesPath;
     }
 
     public List<SearchRulesResult> Handle(SearchRulesCommand query)

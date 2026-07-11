@@ -28,7 +28,7 @@ public sealed class ExpandRuleCommandHandler
     public ExpandRuleCommandHandler(IOptions<KnowledgeBaseOptions> options)
     {
         _parser = new AgentFrameworkToolParser();
-        _knowledgeBasePath = options.Value.Path;
+        _knowledgeBasePath = options.Value.BusinessRulesPath;
     }
 
     public List<SearchRulesResult> Handle(ExpandRuleCommand command)
