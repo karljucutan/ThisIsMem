@@ -2,5 +2,8 @@
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
   <Project Path="src/backend/API/API.csproj" Id="515d01bb-cfa9-44d1-964e-9ebd82a090c2" />
 </Solution>
