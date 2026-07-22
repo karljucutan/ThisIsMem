@@ -1,6 +1,28 @@
 services:
+  postgres:
+      image: pgvector/pgvector:pg18-trixie
+      container_name: thisismem-postgres
+      environment:
+        POSTGRES_DB: thisismem
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        PGDATA: /var/lib/postgresql/18/docker
+      ports:
+        - "5432:5432"
+      volumes:
+        - postgres-thisismem:/var/lib/postgresql
+        - ./scripts/init-pgvector.sql:/docker-entrypoint-initdb.d/init-pgvector.sql
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres -d thisismem"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
   api:
     image: ${DOCKER_REGISTRY-}api
     build:
       context: .
       dockerfile: src/backend/API/Dockerfile
+
+volumes:
+  postgres-thisismem:
