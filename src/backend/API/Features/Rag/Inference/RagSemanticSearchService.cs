@@ -30,7 +30,7 @@ public sealed class RagSemanticSearchService
             join document in _dbContext.Documents.AsNoTracking()
                 on chunk.RagDocumentId equals document.Id
             where document.DocumentKey == _options.DocumentKey
-            orderby chunk.Embedding.CosineDistance(queryEmbedding)
+            orderby chunk.Embedding.CosineDistance(queryEmbedding) //Why order by cosine distance? Because smaller distance means more similar meaning.
             select new RagSemanticSearchResult
             {
                 DocumentKey = document.DocumentKey,

@@ -2,11 +2,11 @@ using API.Domain;
 using API.Features.Rag.Shared;
 using API.Infrastructure.Options;
 using API.Infrastructure.Persistence;
+using Microsoft.Extensions.DataIngestion;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Pgvector;
+using Microsoft.ML.Tokenizers;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace API.Features.Rag.Ingestion;
 
@@ -14,19 +14,20 @@ public sealed class RagIngestionService
 {
     private readonly MemDbContext _dbContext;
     private readonly RagEmbeddingService _embeddingService;
+    private readonly RagPdfReader _pdfReader;
     private readonly RagOptions _options;
 
-    public RagIngestionService(MemDbContext dbContext, RagEmbeddingService embeddingService, IOptions<RagOptions> options)
+    public RagIngestionService(MemDbContext dbContext, RagEmbeddingService embeddingService, RagPdfReader pdfReader, IOptions<RagOptions> options)
     {
         _dbContext = dbContext;
         _embeddingService = embeddingService;
+        _pdfReader = pdfReader;
         _options = options.Value;
     }
 
     public async Task<RagIngestionResult> RebuildDocumentAsync(RagIngestionRequest request, CancellationToken cancellationToken)
     {
         var sourcePath = Path.GetFullPath(request.SourcePath);
-        var pages = RagPdfReader.ReadPages(sourcePath);
         var sourceHash = await ComputeHashAsync(sourcePath, cancellationToken);
 
         var existingDocument = await _dbContext.Documents
@@ -52,36 +53,33 @@ public sealed class RagIngestionService
         _dbContext.Documents.Add(document);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        var chunkIndex = 0;
-
-        foreach (var page in pages)
+        // Consider persisting the extracted document as a canonical Markdown artifact,
+        // along with the raw Azure Document Intelligence result, so re-chunking and
+        // re-indexing can be done without repeating text extraction.
+        var reader = new RagIngestionDocumentReader(_pdfReader);
+        var tokenizer = TiktokenTokenizer.CreateForModel(_options.ChunkingTokenizerModel);
+        var chunkerOptions = new IngestionChunkerOptions(tokenizer)
         {
-            foreach (var chunkText in RagTextChunker.Chunk(page.Text, _options.ChunkSize, _options.ChunkOverlap))
-            {
-                var embedding = await _embeddingService.GenerateEmbeddingAsync(chunkText, cancellationToken);
+            MaxTokensPerChunk = _options.ChunkSize,
+            OverlapTokens = _options.ChunkOverlap,
+        };
 
-                document.Chunks.Add(new RagChunk
-                {
-                    RagDocumentId = document.Id,
-                    ChunkIndex = chunkIndex++,
-                    PageNumber = page.PageNumber,
-                    SectionTitle = $"Page {page.PageNumber}",
-                    ChunkText = chunkText,
-                    SourceExcerpt = TrimExcerpt(chunkText),
-                    Embedding = new Vector(embedding),
-                    CreatedAtUtc = DateTimeOffset.UtcNow
-                });
-            }
+        var chunker = new HeaderChunker(chunkerOptions);
+        var writer = new RagIngestionChunkWriter(document, _embeddingService);
+
+        using var pipeline = new IngestionPipeline<string>(reader, chunker, writer);
+
+        await foreach (var result in pipeline.ProcessAsync([new FileInfo(sourcePath)], cancellationToken))
+        {
+            if (!result.Succeeded)
+                throw new InvalidOperationException($"RAG ingestion failed for '{result.DocumentId}'.", result.Exception);
         }
 
         document.UpdatedAtUtc = DateTimeOffset.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return new RagIngestionResult(request.DocumentKey, chunkIndex, sourcePath);
+        return new RagIngestionResult(request.DocumentKey, writer.ChunkCount, sourcePath);
     }
-
-    private static string TrimExcerpt(string text, int maxLength = 220)
-        => text.Length <= maxLength ? text : text[..maxLength].TrimEnd() + "...";
 
     private static async Task<string> ComputeHashAsync(string filePath, CancellationToken cancellationToken)
     {

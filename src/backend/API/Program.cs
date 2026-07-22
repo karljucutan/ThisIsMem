@@ -24,6 +24,7 @@ builder.Services.AddRagDbContext(builder.Configuration);
 
 builder.Services.AddSingleton<RagIngestionQueue>();
 builder.Services.AddSingleton<RagEmbeddingService>();
+builder.Services.AddSingleton<RagPdfReader>();
 builder.Services.AddScoped<RagIngestionService>();
 builder.Services.AddScoped<RagSemanticSearchService>();
 builder.Services.AddSingleton<RagSemanticSearchAgentTool>();
