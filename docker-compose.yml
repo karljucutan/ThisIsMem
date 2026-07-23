@@ -18,6 +18,21 @@ services:
         timeout: 5s
         retries: 5
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: thisismem-pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-thisismem:/var/lib/pgadmin
+
   api:
     image: ${DOCKER_REGISTRY-}api
     build:
@@ -26,3 +41,4 @@ services:
 
 volumes:
   postgres-thisismem:
+  pgadmin-thisismem:
