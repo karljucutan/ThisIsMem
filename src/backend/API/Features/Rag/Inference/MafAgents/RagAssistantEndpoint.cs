@@ -6,7 +6,7 @@ public static class RagAssistantEndpoint
 {
     public static void MapRagAssistantAIAgent(this WebApplication app)
     {
-        app.MapAGUI(agentName: "RagAssistantAIAgent", pattern: "/api/rag/agent")
+        app.MapAGUI(agentName: "RagAssistantAIAgent", pattern: "/api/rag/agent/nursejoy")
             .WithName("RagAssistantAIAgent");
     }
 }
