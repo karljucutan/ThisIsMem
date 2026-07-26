@@ -21,7 +21,7 @@ public static class RagIngestionEndpoint
         IOptions<KnowledgeBaseProceduresOptions> options,
         CancellationToken cancellationToken)
     {
-        await queue.EnqueueAsync(new RagIngestionRequest(options.Value.DocumentKey, options.Value.IncidentResponsePdfPath), cancellationToken);
+        await queue.EnqueueAsync(new RagIngestionRequest(options.Value.DocumentKey, options.Value.PeripheralNoradrenaline), cancellationToken);
         return Results.Accepted("/api/rag/ingestion/ingest", new { message = "RAG first ingestion queued from PDF source." });
     }
 
@@ -30,7 +30,7 @@ public static class RagIngestionEndpoint
         IOptions<KnowledgeBaseProceduresOptions> options,
         CancellationToken cancellationToken)
     {
-        var markdownPath = Path.ChangeExtension(options.Value.IncidentResponsePdfPath, ".md");
+        var markdownPath = Path.ChangeExtension(options.Value.PeripheralNoradrenaline, ".md");
         await queue.EnqueueAsync(new RagIngestionRequest(options.Value.DocumentKey, markdownPath), cancellationToken);
         return Results.Accepted("/api/rag/ingestion/reindex", new { message = "RAG reindex queued from markdown source." });
     }
