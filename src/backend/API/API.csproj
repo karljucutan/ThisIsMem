@@ -25,6 +25,7 @@
     <PackageReference Include="Microsoft.Agents.AI.Hosting.AGUI.AspNetCore" Version="1.11.1-preview.260625.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.DataIngestion" Version="10.0.0-preview.1.25559.3" />
+    <PackageReference Include="Microsoft.Extensions.DataIngestion.Markdig" Version="10.8.0-preview.1.26364.2" />
 	  <PackageReference Include="Microsoft.SemanticKernel" Version="1.78.0" />
     <PackageReference Include="Microsoft.ML.Tokenizers" Version="2.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />

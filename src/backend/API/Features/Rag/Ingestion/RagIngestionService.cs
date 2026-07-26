@@ -57,11 +57,10 @@ public sealed class RagIngestionService
 
         if (Path.GetExtension(sourcePath).Equals(".pdf", StringComparison.OrdinalIgnoreCase))
         {
-            var pages = await _pdfReader.ReadPagesAsync(sourcePath, cancellationToken);
-            ingestionSourcePath = await PersistCanonicalMarkdownAsync(sourcePath, pages, cancellationToken);
+            ingestionSourcePath = await PersistCanonicalMarkdownAsync(sourcePath, cancellationToken);
         }
 
-        var reader = new RagIngestionDocumentReader(_pdfReader);
+        IngestionDocumentReader reader = new MarkdownReader();
         var tokenizer = TiktokenTokenizer.CreateForModel(_options.ChunkingTokenizerModel);
         var chunkerOptions = new IngestionChunkerOptions(tokenizer)
         {
@@ -93,31 +92,13 @@ public sealed class RagIngestionService
         return Convert.ToHexString(hash);
     }
 
-    private static async Task<string> PersistCanonicalMarkdownAsync(
+    private async Task<string> PersistCanonicalMarkdownAsync(
         string sourcePdfPath,
-        IReadOnlyList<RagPdfPage> pages,
         CancellationToken cancellationToken)
     {
         var markdownPath = Path.ChangeExtension(sourcePdfPath, ".md");
-        var markdown = BuildCanonicalMarkdown(pages);
-        await File.WriteAllTextAsync(markdownPath, markdown, Encoding.UTF8, cancellationToken);
+        var (_, fullMarkdownContent) = await _pdfReader.ReadPagesAsync(sourcePdfPath, cancellationToken);
+        await File.WriteAllTextAsync(markdownPath, fullMarkdownContent, Encoding.UTF8, cancellationToken);
         return markdownPath;
-    }
-
-    private static string BuildCanonicalMarkdown(IReadOnlyList<RagPdfPage> pages)
-    {
-        var builder = new StringBuilder();
-
-        foreach (var page in pages)
-        {
-            if (builder.Length > 0)
-                builder.AppendLine();
-
-            builder.AppendLine($"## Page {page.PageNumber}");
-            builder.AppendLine();
-            builder.AppendLine(string.IsNullOrWhiteSpace(page.Text) ? "(empty page)" : page.Text.Trim());
-        }
-
-        return builder.ToString().TrimEnd() + Environment.NewLine;
     }
 }
