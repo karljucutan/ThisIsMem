@@ -8,7 +8,7 @@ services:
       - ConnectionStrings__MemDatabase=Host=postgres;Port=5432;Database=thisismem;Username=postgres;Password=postgres
       - KnowledgeBase__BusinessRulesPath=/src/knowledgebase/business-rules
       - KnowledgeBase__ProceduresPath=/src/knowledgebase/procedures
-      - KnowledgeBase__Procedures__PeripheralNoradrenaline="/src/knowledgebase/procedures/HealthCareProfessionals-1092-peripheral-noradrenaline.pdf",
+      - KnowledgeBase__Procedures__PeripheralNoradrenaline=/src/knowledgebase/procedures/HealthCareProfessionals-1092-peripheral-noradrenaline.pdf
  
     ports:
       - "8080:8080"

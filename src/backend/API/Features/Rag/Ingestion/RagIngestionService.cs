@@ -28,7 +28,7 @@ public sealed class RagIngestionService
 
     public async Task<RagIngestionResult> RebuildDocumentAsync(RagIngestionRequest request, CancellationToken cancellationToken)
     {
-        var sourcePath = Path.GetFullPath(request.SourcePath);
+        var sourcePath = request.SourcePath;
         var sourceHash = await ComputeHashAsync(sourcePath, cancellationToken);
         var ingestionSourcePath = sourcePath;
 

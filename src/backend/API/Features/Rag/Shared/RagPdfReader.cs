@@ -25,7 +25,7 @@ public sealed class RagPdfReader
             throw new InvalidOperationException("Rag:DocumentIntelligenceEndpoint is not configured.");
 
         var endpoint = new Uri(_options.DocumentIntelligenceEndpoint);
-        var client = CreateClient(endpoint);
+        var client = new DocumentIntelligenceClient(endpoint, new DefaultAzureCredential());
 
         await using var stream = File.OpenRead(filePath);
         var content = await BinaryData.FromStreamAsync(stream, cancellationToken);
@@ -49,10 +49,6 @@ public sealed class RagPdfReader
         var fullMarkdownContent = result.Content ?? string.Empty;
         return (pages, fullMarkdownContent);
     }
-
-
-    private static DocumentIntelligenceClient CreateClient(Uri endpoint)
-        => new(endpoint, new DefaultAzureCredential());
 
     private static string ExtractPageText(DocumentPage page)
     {
