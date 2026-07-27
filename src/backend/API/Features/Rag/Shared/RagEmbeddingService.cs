@@ -12,8 +12,8 @@ public sealed class RagEmbeddingService
 
     public RagEmbeddingService(IConfiguration configuration, IOptions<RagOptions> options)
     {
-        var endpoint = configuration["AZURE_OPENAI_ENDPOINT"]
-            ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT is not set.");
+        var endpoint = configuration["AZURE_FOUNDRY_ENDPOINT"]
+            ?? throw new InvalidOperationException("AZURE_FOUNDRY_ENDPOINT is not set.");
 
         var embeddingDeploymentName = configuration["AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME"];
 

@@ -24,7 +24,7 @@ public sealed class RagIngestionBackgroundService : BackgroundService
             {
                 await service.RebuildDocumentAsync(request, stoppingToken);
             }
-            catch
+            catch (Exception e)
             {
                 // Keep the worker alive; ingestion failures are surfaced through logs in a later pass.
             }
