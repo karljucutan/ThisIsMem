@@ -12,7 +12,7 @@ public sealed class RagSemanticSearchAgentTool
         _scopeFactory = scopeFactory;
     }
 
-    [Description("Search the incident-response PDF semantically and return the most relevant chunks with traceability.")]
+    [Description("Search the clinical guidelines knowledge base semantically and return the most relevant chunks with traceability.")]
     public async Task<string> ExecuteSemanticSearchTool(
         [Description("Structured semantic search parameters.")] SemanticSearchCommand command)
     {
@@ -21,7 +21,7 @@ public sealed class RagSemanticSearchAgentTool
         var results = await service.SearchAsync(command.Query, command.TopResults, CancellationToken.None);
 
         if (results.Count == 0)
-            return "No incident-response content found matching the query.";
+            return "No clinical guideline content found matching the query.";
 
         var sb = new StringBuilder();
         sb.AppendLine($"Found {results.Count} semantic match(es) for: {command.Query}");
