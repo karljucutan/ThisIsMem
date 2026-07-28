@@ -29,7 +29,18 @@ public sealed class RagSemanticSearchService
             from chunk in _dbContext.Chunks.AsNoTracking()
             join document in _dbContext.Documents.AsNoTracking()
                 on chunk.RagDocumentId equals document.Id
-            where document.DocumentKey == _options.DocumentKey
+            // Optional: add a documentKeys (string[]) parameter to scope search to specific documents.
+            // Use when: (1) user explicitly selects a procedure/guideline to search within,
+            // (2) role-based access control limits which documents a user may see,
+            // (3) two documents conflict and the caller must pin a source.
+            // Without this filter, cosine distance ranking already surfaces the most relevant
+            // chunks across all ingested documents — prefer that for general queries.
+
+
+            // To support filtering: add a GetAvailableDocumentKeys agent tool that queries
+            // rag_document for all DocumentKey + Title pairs so the LLM can pick the right
+            // keys before calling this search. 
+            // Pattern: agent calls GetDocumentKeys first, then passes selected keys into SearchAsync.
             orderby chunk.Embedding.CosineDistance(queryEmbedding) //Why order by cosine distance? Because smaller distance means more similar meaning.
             select new RagSemanticSearchResult
             {
