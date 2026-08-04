@@ -27,7 +27,7 @@ public static class RagIngestionEndpoint
         if (document is null)
             return Results.NotFound(new { message = $"No procedure document is configured for '{request.DocumentKey}'." });
 
-        await queue.EnqueueAsync(new RagIngestionRequest(document.DocumentKey, document.PeripheralNoradrenaline), cancellationToken);
+        await queue.EnqueueAsync(new RagIngestionRequest(document.DocumentKey, document.DocumentPath), cancellationToken);
         return Results.Accepted("/api/rag/ingestion/ingest", new { message = "RAG first ingestion queued from PDF source." });
     }
 
@@ -42,7 +42,7 @@ public static class RagIngestionEndpoint
         if (document is null)
             return Results.NotFound(new { message = $"No procedure document is configured for '{request.DocumentKey}'." });
 
-        var markdownPath = Path.ChangeExtension(document.PeripheralNoradrenaline, ".md");
+        var markdownPath = Path.ChangeExtension(document.DocumentPath, ".md");
         await queue.EnqueueAsync(new RagIngestionRequest(document.DocumentKey, markdownPath), cancellationToken);
         return Results.Accepted("/api/rag/ingestion/reindex", new { message = "RAG reindex queued from markdown source." });
     }

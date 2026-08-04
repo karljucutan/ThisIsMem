@@ -14,7 +14,7 @@ public sealed class KnowledgeBaseProcedureDocumentOptions
 {
     public string DocumentKey { get; set; } = string.Empty;
 
-    public string PeripheralNoradrenaline { get; set; } = string.Empty;
+    public string DocumentPath { get; set; } = string.Empty;
 
     public string CollectionName { get; set; } = string.Empty;
 }
