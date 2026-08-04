@@ -8,7 +8,12 @@ services:
       - ConnectionStrings__MemDatabase=Host=postgres;Port=5432;Database=thisismem;Username=postgres;Password=postgres
       - KnowledgeBase__BusinessRulesPath=/src/knowledgebase/business-rules
       - KnowledgeBase__ProceduresPath=/src/knowledgebase/procedures
-      - KnowledgeBase__Procedures__PeripheralNoradrenaline=/src/knowledgebase/procedures/HealthCareProfessionals-1092-peripheral-noradrenaline.pdf
+      - KnowledgeBase__Procedures__Documents__0__DocumentKey=peripheral-noradrenaline
+      - KnowledgeBase__Procedures__Documents__0__PeripheralNoradrenaline=/src/knowledgebase/procedures/HealthCareProfessionals-1092-peripheral-noradrenaline.pdf
+      - KnowledgeBase__Procedures__Documents__0__CollectionName=peripheral-noradrenaline
+      - KnowledgeBase__Procedures__Documents__1__DocumentKey=united-for-diabetes-philippines
+      - KnowledgeBase__Procedures__Documents__1__PeripheralNoradrenaline=/src/knowledgebase/procedures/Diabetes-United-for-Diabetes-Phil.pdf
+      - KnowledgeBase__Procedures__Documents__1__CollectionName=united-for-diabetes-philippines
  
     ports:
       - "8080:8080"

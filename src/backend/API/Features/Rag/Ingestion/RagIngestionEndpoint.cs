@@ -17,21 +17,33 @@ public static class RagIngestionEndpoint
     }
 
     private static async Task<IResult> HandleFirstIngestion(
+        RagIngestionDocumentRequest request,
         RagIngestionQueue queue,
         IOptions<KnowledgeBaseProceduresOptions> options,
         CancellationToken cancellationToken)
     {
-        await queue.EnqueueAsync(new RagIngestionRequest(options.Value.DocumentKey, options.Value.PeripheralNoradrenaline), cancellationToken);
+        var document = options.Value.GetDocument(request.DocumentKey);
+
+        if (document is null)
+            return Results.NotFound(new { message = $"No procedure document is configured for '{request.DocumentKey}'." });
+
+        await queue.EnqueueAsync(new RagIngestionRequest(document.DocumentKey, document.PeripheralNoradrenaline), cancellationToken);
         return Results.Accepted("/api/rag/ingestion/ingest", new { message = "RAG first ingestion queued from PDF source." });
     }
 
     private static async Task<IResult> HandleReindex(
+        RagIngestionDocumentRequest request,
         RagIngestionQueue queue,
         IOptions<KnowledgeBaseProceduresOptions> options,
         CancellationToken cancellationToken)
     {
-        var markdownPath = Path.ChangeExtension(options.Value.PeripheralNoradrenaline, ".md");
-        await queue.EnqueueAsync(new RagIngestionRequest(options.Value.DocumentKey, markdownPath), cancellationToken);
+        var document = options.Value.GetDocument(request.DocumentKey);
+
+        if (document is null)
+            return Results.NotFound(new { message = $"No procedure document is configured for '{request.DocumentKey}'." });
+
+        var markdownPath = Path.ChangeExtension(document.PeripheralNoradrenaline, ".md");
+        await queue.EnqueueAsync(new RagIngestionRequest(document.DocumentKey, markdownPath), cancellationToken);
         return Results.Accepted("/api/rag/ingestion/reindex", new { message = "RAG reindex queued from markdown source." });
     }
 }
